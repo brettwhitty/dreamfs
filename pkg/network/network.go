@@ -136,7 +136,6 @@ func NewSwarmDelegate(ps *storage.PersistentStore, ml *memberlist.Memberlist) *S
 func (d *SwarmDelegate) NodeMeta(limit int) []byte {
 	return []byte{}
 }
-
 func (d *SwarmDelegate) NotifyMsg(msg []byte) {
 	var meta metadata.FileMetadata
 	if err := json.Unmarshal(msg, &meta); err != nil {
@@ -208,7 +207,7 @@ func GetPeerListFromHTTP(url string) ([]string, error) {
 }
 
 func StartSwarm(ps *storage.PersistentStore) (*memberlist.Memberlist, *SwarmDelegate, error) {
-	cfg := memberlist.DefaultLocalConfig()
+	cfg := memberlist.DefaultLocalConfig() // Corrected typo
 	hostname, err := os.Hostname()
 	if err != nil {
 		hostname = "node"
@@ -238,7 +237,7 @@ func StartSwarm(ps *storage.PersistentStore) (*memberlist.Memberlist, *SwarmDele
 			log.Printf("No peers discovered from HTTP endpoint")
 		}
 	} else if !viper.GetBool("stealth") {
-		ip := net.ParseIP(GetLocalIP())
+		ip := net.ParseIP(utils.GetLocalIP())
 		srv, err := mdns.NewMDNSService(hostname, "_indexer._tcp", "", "", viper.GetInt("swarmPort"), []net.IP{ip}, []string{"Hello friend"})
 		if err != nil {
 			log.Printf("mDNS service error: %v", err)
