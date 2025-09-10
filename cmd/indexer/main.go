@@ -8,7 +8,6 @@ import (
 	"os/signal"
 	"runtime"
 	"syscall"
-	"time"
 
 	"github.com/fatih/color"
 	"github.com/hashicorp/memberlist"
@@ -20,18 +19,6 @@ import (
 	"gnomatix/dreamfs/v2/pkg/fileprocessor"
 	"gnomatix/dreamfs/v2/pkg/utils"
 	"gnomatix/dreamfs/v2/pkg/config"
-)
-
-// ------------------------
-// Configurable Defaults
-// ------------------------
-
-const (
-	defaultSwarmPort = 7946
-	defaultWorkers   = 1 // unless --all-procs is provided
-	defaultQuiet     = false
-	defaultStealth   = false
-	defaultPeerListURL = ""
 )
 
 // Global swarm delegate.
@@ -68,6 +55,7 @@ func main() {
 
 	cobra.OnInitialize(func() {
 		config.InitConfig(cfgFile)
+		utils.SetHostID()
 	})
 
 	// Global flags.
@@ -75,13 +63,13 @@ func main() {
 	rootCmd.PersistentFlags().String("dbpath", utils.DefaultBoltDBPath(), "Path to the BoltDB file (default: XDG data directory)")
 	rootCmd.PersistentFlags().String("addr", ":8080", "Address to serve the replication endpoint")
 	// Default workers is 1 unless --all-procs is set.
-	rootCmd.PersistentFlags().Int("workers", defaultWorkers, "Number of concurrent workers for indexing (default: 1, use --all-procs to use all available CPUs)")
-	rootCmd.PersistentFlags().Bool("all-procs", false, "Use all available processors (overrides --workers)")	rootCmd.PersistentFlags().Bool("quiet", defaultQuiet, "Suppress spinner and progress messages")
+	rootCmd.PersistentFlags().Int("workers", config.DefaultWorkers, "Number of concurrent workers for indexing (default: 1, use --all-procs to use all available CPUs)")
+	rootCmd.PersistentFlags().Bool("all-procs", false, "Use all available processors (overrides --workers)")	rootCmd.PersistentFlags().Bool("quiet", config.DefaultQuiet, "Suppress spinner and progress messages")
 	rootCmd.PersistentFlags().Bool("swarm", false, "Enable swarm mode for p2p replication")
 	rootCmd.PersistentFlags().StringSlice("peers", []string{}, "Comma-separated list of peer addresses to join")
-	rootCmd.PersistentFlags().Int("swarmPort", defaultSwarmPort, "Port for swarm memberlist")
-	rootCmd.PersistentFlags().Bool("stealth", defaultStealth, "Enable stealth mode which disables mDNS auto-discovery (requires manual peer list)")
-	rootCmd.PersistentFlags().String("peerListURL", defaultPeerListURL, "HTTP/HTTPS URL that returns a JSON array of peer addresses")
+	rootCmd.PersistentFlags().Int("swarmPort", config.DefaultSwarmPort, "Port for swarm memberlist")
+	rootCmd.PersistentFlags().Bool("stealth", config.DefaultStealth, "Enable stealth mode which disables mDNS auto-discovery (requires manual peer list)")
+	rootCmd.PersistentFlags().String("peerListURL", config.DefaultPeerListURL, "HTTP/HTTPS URL that returns a JSON array of peer addresses")
 	viper.BindPFlag("dbpath", rootCmd.PersistentFlags().Lookup("dbpath"))
 	viper.BindPFlag("addr", rootCmd.PersistentFlags().Lookup("addr"))
 	viper.BindPFlag("workers", rootCmd.PersistentFlags().Lookup("workers"))
