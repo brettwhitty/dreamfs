@@ -342,7 +342,7 @@ func FingerprintFile(path string) (string, error) {
 	}
 
 	hash := blake3.Sum256(data)
-	return fmt.Sprintf("%x", hash),
+	return fmt.Sprintf("%x", hash), nil
 }
 
 // Global swarm delegate.
@@ -420,7 +420,7 @@ func processAllDirectories(ctx context.Context, root string, ps *PersistentStore
 			}
 			// Only process files directly in root.
 			if de.IsDir() && path != root {
-				return godirwalk.SkipNode
+				return godirwalk.SkipThisNode
 			}
 			if !de.IsDir() {
 				_, err := ProcessFile(ctx, path, ps, true)
@@ -492,14 +492,14 @@ func processAllDirectories(ctx context.Context, root string, ps *PersistentStore
 			continue
 		}
 		// Initialize progress bar and spinner.
-		var sp spinner.Model
-		if !quiet {
-			sp = spinner.New()
-			sp.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("205")).Bold(true)
-			sp.Start()
-			fmt.Printf("Processing files in %s...\n", dir)
-		}
-		p := progress.New(progress.WithDefaultGradient())
+		// var sp spinner.Model
+		// if !quiet {
+		// 	sp = spinner.New()
+		// 	sp.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("205")).Bold(true)
+		// 	sp.Start()
+		// 	fmt.Printf("Processing files in %s...\n", dir)
+		// }
+		// p := progress.New(progress.WithDefaultGradient())
 		var processed int64
 		for _, fpath := range filesInDir {
 			select {
@@ -512,15 +512,15 @@ func processAllDirectories(ctx context.Context, root string, ps *PersistentStore
 				fmt.Printf("Error processing %s: %v\n", fpath, err)
 			}
 			processed++
-			if !quiet {
-				percent := float64(processed) / float64(totalFiles)
-				fmt.Printf("\r%s", lipgloss.NewStyle().Bold(true).Render(p.View(percent)))
-			}
+			// if !quiet {
+			// 	percent := float64(processed) / float64(totalFiles)
+			// 	fmt.Printf("\r%s", lipgloss.NewStyle().Bold(true).Render(p.View(percent)))
+			// }
 		}
-		if !quiet {
-			sp.Stop()
-			fmt.Println()
-		}
+		// if !quiet {
+		// 	sp.Stop()
+		// 	fmt.Println()
+		// }
 	}
 	return nil
 }
@@ -558,7 +558,7 @@ func dumpDB(ps *PersistentStore, format string) {
 	if err != nil {
 		log.Fatalf("failed to get metadata: %v", err)
 	}
-	sswitch format {
+	switch format {
 	case "json":
 		enc := json.NewEncoder(os.Stdout)
 		enc.SetIndent("", "  ")
@@ -586,8 +586,15 @@ type fileMetaBroadcast struct {
 	msg []byte
 }
 
-func (f *fileMetaBroadcast) Message() []byte { return f.msg }
-func (f *fileMetaBroadcast) Finished()       {}
+func (f *fileMetaBroadcast) Invalidates(other memberlist.Broadcast) bool {
+	return false
+}
+
+func (f *fileMetaBroadcast) Message() []byte {
+	return f.msg
+}
+
+func (f *fileMetaBroadcast) Finished() {}
 
 type SwarmDelegate struct {
 	ps         *PersistentStore
