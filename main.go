@@ -21,7 +21,7 @@ import (
 	"time"
 
 	"github.com/adrg/xdg"
-	
+	"github.com/charmbracelet/bubbles/progress"
 	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/fatih/color"
@@ -39,7 +39,6 @@ var (
 	version = "dev"
 	commit  = "none"
 	date    = "unknown"
-	errSkipNode = godirwalk.SkipNode
 )
 
 // ------------------------
@@ -421,7 +420,7 @@ func processAllDirectories(ctx context.Context, root string, ps *PersistentStore
 			}
 			// Only process files directly in root.
 			if de.IsDir() && path != root {
-				return errSkipNode
+				return godirwalk.SkipThisNode
 			}
 			if !de.IsDir() {
 				_, err := ProcessFile(ctx, path, ps, true)
@@ -961,11 +960,6 @@ func main() {
 	rootCmd.AddCommand(versionCmd)
 
 	if err := rootCmd.Execute(); err != nil {
-		log.Fatal(err)
-	}
-}
-
- nil {
 		log.Fatal(err)
 	}
 }
