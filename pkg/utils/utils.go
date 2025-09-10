@@ -4,7 +4,6 @@ import (
 	"path/filepath"
 
 	"encoding/base64"
-	"fmt"
 	"github.com/adrg/xdg"
 	"github.com/denisbrodbeck/machineid"
 	"github.com/google/uuid"
@@ -28,7 +27,7 @@ var HostID string
 // SetHostID allows the value to be overridden by config value
 func SetHostID(cfgHost ...string) {
 	// if a string was provided, use that
-	if len(cfgHost) == 1 {
+	if (len(cfgHost) == 1) {
 		HostID = cfgHost[0]
 	} else {
 		// otherwise we'll use the machineid library
