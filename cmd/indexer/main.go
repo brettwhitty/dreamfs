@@ -55,18 +55,14 @@ func main() {
 		},
 	}
 
-	cobra.OnInitialize(func() {
-		config.InitConfig(cfgFile)
-		utils.SetHostID()
-	})
-
 	// Global flags.
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default: indexer.json in XDG config directory)")
 	rootCmd.PersistentFlags().String("dbpath", utils.DefaultBoltDBPath(), "Path to the BoltDB file (default: XDG data directory)")
 	rootCmd.PersistentFlags().String("addr", ":8080", "Address to serve the replication endpoint")
 	// Default workers is 1 unless --all-procs is set.
 	rootCmd.PersistentFlags().Int("workers", config.DefaultWorkers, "Number of concurrent workers for indexing (default: 1, use --all-procs to use all available CPUs)")
-	rootCmd.PersistentFlags().Bool("all-procs", false, "Use all available processors (overrides --workers)")	rootCmd.PersistentFlags().Bool("quiet", config.DefaultQuiet, "Suppress spinner and progress messages")
+	rootCmd.PersistentFlags().Bool("all-procs", false, "Use all available processors (overrides --workers)")
+	rootCmd.PersistentFlags().Bool("quiet", config.DefaultQuiet, "Suppress spinner and progress messages")
 	rootCmd.PersistentFlags().Bool("swarm", false, "Enable swarm mode for p2p replication")
 	rootCmd.PersistentFlags().StringSlice("peers", []string{}, "Comma-separated list of peer addresses to join")
 	rootCmd.PersistentFlags().Int("swarmPort", config.DefaultSwarmPort, "Port for swarm memberlist")
@@ -82,6 +78,11 @@ func main() {
 	viper.BindPFlag("swarmPort", rootCmd.PersistentFlags().Lookup("swarmPort"))
 	viper.BindPFlag("stealth", rootCmd.PersistentFlags().Lookup("stealth"))
 	viper.BindPFlag("peerListURL", rootCmd.PersistentFlags().Lookup("peerListURL"))
+
+	cobra.OnInitialize(func() {
+		config.InitConfig(cfgFile)
+		utils.SetHostID()
+	})
 
 	// "index" command: Process a directory with per-subdirectory status and progress.
 	indexCmd := &cobra.Command{
