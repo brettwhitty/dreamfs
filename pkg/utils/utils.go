@@ -3,12 +3,12 @@ package utils
 import (
 	"path/filepath"
 
+	"encoding/base64"
+	"fmt"
 	"github.com/adrg/xdg"
 	"github.com/denisbrodbeck/machineid"
 	"github.com/google/uuid"
-	"encoding/base64"
 	"log"
-	"fmt"
 )
 
 // DefaultBoltDBPath returns the system-appropriate default DB path.
@@ -28,7 +28,7 @@ var HostID string
 // SetHostID allows the value to be overridden by config value
 func SetHostID(cfgHost ...string) {
 	// if a string was provided, use that
-	if (len(cfgHost) == 1) {
+	if len(cfgHost) == 1 {
 		HostID = cfgHost[0]
 	} else {
 		// otherwise we'll use the machineid library
@@ -43,7 +43,7 @@ func SetHostID(cfgHost ...string) {
 // GenerateUUID generates a 'v5 UUID' for a string value
 func GenerateUUID(data string) string {
 	// instantiate the UUID object and return as a string
-	uuid:= uuid.NewSHA1(uuid.NameSpaceURL, []byte(data))
+	uuid := uuid.NewSHA1(uuid.NameSpaceURL, []byte(data))
 	return uuid.String()
 }
 
