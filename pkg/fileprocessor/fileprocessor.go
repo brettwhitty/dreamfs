@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -23,6 +24,7 @@ import (
 	"gnomatix/dreamfs/v2/pkg/metadata"
 	"gnomatix/dreamfs/v2/pkg/network"
 	"gnomatix/dreamfs/v2/pkg/storage"
+	"gnomatix/dreamfs/v2/pkg/utils"
 )
 
 // ------------------------
@@ -67,7 +69,7 @@ func CanonicalizePath(absPath string) (string, error) {
 				if len(parts) == 3 {
 					rest = "/" + parts[2]
 				}
-			return fmt.Sprintf("%s:/%s%s", server, share, rest), nil
+				return fmt.Sprintf("%s:/%s%s", server, share, rest), nil
 			}
 		}
 		return absPath, nil
@@ -190,11 +192,20 @@ func ProcessFile(ctx context.Context, filePath string, ps *storage.PersistentSto
 		return "", fmt.Errorf("failed to fingerprint %s: %w", filePath, err)
 	}
 	if store {
+		bytes := info.Size()
+		modTime := info.ModTime().Format(time.RFC3339)
+
+		idString := utils.HostID + "|" + canonicalPath + "|" + modTime + "|" + strconv.FormatInt(bytes, 16) + "|" + fingerprint
+		UUID := utils.GenerateUUID(idString)
+
 		meta := metadata.FileMetadata{
-			ID:       fingerprint,
+			ID := UUID
+			IDString: idString,
+			HostID:   utils.HostID,
 			FilePath: canonicalPath,
-			Size:     info.Size(),
-			ModTime:  info.ModTime().Format(time.RFC3339),
+			Size:     bytes,
+			ModTime:  modTime,
+			BLAKE3:   fingerprint,
 			Extra:    map[string]interface{}{},
 		}
 		if err := ps.Put(meta); err != nil {
