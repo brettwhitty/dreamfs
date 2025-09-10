@@ -1,10 +1,22 @@
 package config
 
 import (
+	"time"
+
 	"github.com/fatih/color"
 	"github.com/spf13/viper"
 
 	"gnomatix/dreamfs/v2/pkg/utils"
+)
+
+const (
+	DefaultSwarmPort   = 7946
+	DefaultWorkers     = 1 // unless --all-procs is provided
+	DefaultQuiet       = false
+	DefaultStealth     = false
+	DefaultPeerListURL = ""
+	DefaultSyncInterval = 1 * time.Second
+	DefaultBatchSize    = 100
 )
 
 // ------------------------
