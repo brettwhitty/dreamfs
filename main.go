@@ -964,3 +964,8 @@ func main() {
 		log.Fatal(err)
 	}
 }
+
+ nil {
+		log.Fatal(err)
+	}
+}
