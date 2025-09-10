@@ -28,7 +28,6 @@ import (
 	"github.com/hashicorp/mdns"
 	"github.com/hashicorp/memberlist"
 	"github.com/karrick/godirwalk"
-	"github.com/shirou/gopsutil/disk"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/zeebo/blake3"
@@ -36,6 +35,7 @@ import (
 	"gnomatix/dreamfs/v2/pkg/metadata"
 	"gnomatix/dreamfs/v2/pkg/storage"
 	"gnomatix/dreamfs/v2/pkg/network"
+	"gnomatix/dreamfs/v2/pkg/fileprocessor"
 )
 
 // ------------------------
@@ -56,69 +56,6 @@ const (
         defaultStealth   = false
         defaultPeerListURL = ""
 )
-
-// ------------------------
-// Global Peer List for HTTP-based Discovery
-// ------------------------
-
-var (
-        peerList      []string
-        peerListMutex sync.Mutex
-)
-
-func handlePeerList(w http.ResponseWriter, r *http.Request) {
-        // Extract remote IP address.
-        host, _, err := net.SplitHostPort(r.RemoteAddr)
-        if err != nil {
-                host = r.RemoteAddr
-        }
-        peerAddr := fmt.Sprintf("%s:%d", host, viper.GetInt("swarmPort"))       
-
-        peerListMutex.Lock()
-        defer peerListMutex.Unlock()
-        // Add if not already present.
-        found := false
-        for _, p := range peerList {
-                if p == peerAddr {
-                        found = true
-                        break
-                }
-        }
-        if !found {
-                peerList = append(peerList, peerAddr)
-                log.Printf("Added new peer via HTTP: %s", peerAddr)
-        }
-        w.Header().Set("Content-Type", "application/json")
-        if err := json.NewEncoder(w).Encode(peerList); err != nil {
-                http.Error(w, "failed to encode peer list", http.StatusInternalServerError)
-        }
-}
-
-// ------------------------
-// Filesystem Partition Caching for Canonicalization
-// ------------------------
-
-var (
-        partitionsCache     []disk.PartitionStat
-        partitionsCacheTime time.Time
-        cacheMutex          sync.Mutex
-        cacheDuration       = 5 * time.Minute
-)
-
-func getPartitions() ([]disk.PartitionStat, error) {
-        cacheMutex.Lock()
-        defer cacheMutex.Unlock()
-        if time.Since(partitionsCacheTime) < cacheDuration && partitionsCache != nil {
-                return partitionsCache, nil
-        }
-        parts, err := disk.Partitions(true)
-        if err != nil {
-                return nil, err
-        }
-        partitionsCache = parts
-        partitionsCacheTime = time.Now()
-        return parts, nil
-}
 
 // ------------------------
 // Canonicalize Paths for Physical Uniqueness
@@ -142,7 +79,7 @@ func canonicalizePath(absPath string) (string, error) {
                 return absPath, nil
         }
 
-        parts, err := getPartitions()
+        parts, err := fileprocessor.GetPartitions()
         if err != nil {
                 return absPath, err
         }
@@ -575,7 +512,7 @@ func startSwarm(ps *storage.PersistentStore) (*memberlist.Memberlist, *network.S
         if err != nil {
                 return nil, nil, fmt.Errorf("failed to create memberlist: %w", err)
         }
-        d := NewSwarmDelegate(ps, ml)
+        d := network.NewSwarmDelegate(ps, ml)
         cfg.Delegate = d
 
         peerListURL := viper.GetString("peerListURL")
@@ -587,9 +524,8 @@ func startSwarm(ps *storage.PersistentStore) (*memberlist.Memberlist, *network.S
                         n, err := ml.Join(discovered)
                         if err != nil {
                                 log.Printf("Failed to join HTTP-discovered peers: %v", err)
-                        } else {
-                                log.Printf("Joined %d HTTP-discovered peers", n)
                         }
+                        log.Printf("Joined %d HTTP-discovered peers", n)
                 } else {
                         log.Printf("No peers discovered from HTTP endpoint")
                 }
@@ -656,11 +592,12 @@ func startSwarm(ps *storage.PersistentStore) (*memberlist.Memberlist, *network.S
 func initConfig(cfgFile string) {
         if cfgFile != "" {
                 viper.SetConfigFile(cfgFile)
+        } else {
+                xdgConfigDir := xdg.DataHome
+                viper.AddConfigPath(xdgConfigDir)
+                viper.SetConfigName("indexer")
+                viper.SetConfigType("json")
         }
-        xdgConfigDir := xdg.DataHome
-        viper.AddConfigPath(xdgConfigDir)
-        viper.SetConfigName("indexer")
-        viper.SetConfigType("json")
         viper.AutomaticEnv()
         if err := viper.ReadInConfig(); err == nil {
                 color.Magenta("Using config file: %s", viper.ConfigFileUsed())
@@ -698,7 +635,7 @@ func main() {
                 },
         }
 
-        cobra.OnInitialize(func() { 
+        cobra.OnInitialize(func() {
                 initConfig(cfgFile)
         })
 
