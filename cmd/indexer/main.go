@@ -105,8 +105,9 @@ func init() { // Use init function for Cobra setup
 			}
 			// If swarm is enabled, start memberlist.
 			var ml *memberlist.Memberlist
+			var currentSwarmDelegate *network.SwarmDelegate // Declare here
 			if viper.GetBool("swarm") {
-				ml, swarmDelegate, err = network.StartSwarm(ps)
+				ml, currentSwarmDelegate, err = network.StartSwarm(ps)
 				if err != nil {
 					color.Red("failed to start swarm: %v", err)
 					os.Exit(1)
@@ -143,8 +144,9 @@ func init() { // Use init function for Cobra setup
 			}
 			defer ps.Close()
 			var ml *memberlist.Memberlist
+			var currentSwarmDelegate *network.SwarmDelegate // Declare here
 			if viper.GetBool("swarm") {
-				ml, swarmDelegate, err = network.StartSwarm(ps)
+				ml, currentSwarmDelegate, err = network.StartSwarm(ps)
 				if err != nil {
 					color.Red("failed to start swarm: %v", err)
 					os.Exit(1)
