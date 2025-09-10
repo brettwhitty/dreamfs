@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"runtime"
 	"syscall"
+	"time"
 
 	"github.com/fatih/color"
 	"github.com/hashicorp/memberlist"
