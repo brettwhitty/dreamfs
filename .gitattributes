@@ -15,6 +15,10 @@
 
 ## NOTES:
 ##
+## Set global config to auto
+## 
+##   git config core.autocrlf true
+##
 ## To avoid losing any local changes to files in the repository,
 ## add and commit any outstanding changes by running the following commands.
 ##
