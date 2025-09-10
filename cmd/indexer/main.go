@@ -177,6 +177,17 @@ func main() {
 	rootCmd.AddCommand(serveCmd)
 	rootCmd.AddCommand(dumpCmd)
 
+	// Add monitor command
+	monitorCmd := &cobra.Command{
+		Use:   "monitor",
+		Short: "Monitor peer metrics",
+		Run: func(cmd *cobra.Command, args []string) {
+			// This will be implemented in a later step
+			log.Println("Monitor command not yet implemented.")
+		},
+	}
+	rootCmd.AddCommand(monitorCmd)
+
 	if err := rootCmd.Execute(); err != nil {
 		log.Fatal(err)
 	}
