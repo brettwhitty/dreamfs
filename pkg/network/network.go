@@ -245,7 +245,7 @@ func StartSwarm(ps *storage.PersistentStore) (*memberlist.Memberlist, *SwarmDele
 		} else {
 			mdnsServer, err := mdns.NewServer(&mdns.Config{Zone: srv})
 			if err != nil {
-				log.Printf("mDNS server: %v", err)
+				log.Printf("mDNS server error: %v", err)
 			}
 			go func() {
 				<-time.After(10 * time.Minute)
