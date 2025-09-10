@@ -18,6 +18,7 @@ import (
 	"gnomatix/dreamfs/v2/pkg/network"
 	"gnomatix/dreamfs/v2/pkg/fileprocessor"
 	"gnomatix/dreamfs/v2/pkg/utils"
+	"gnomatix/dreamfs/v2/pkg/config"
 )
 
 // ------------------------
@@ -34,27 +35,6 @@ const (
 
 // Global swarm delegate.
 var swarmDelegate *network.SwarmDelegate
-
-// ------------------------
-// Configuration and CLI Setup
-// ------------------------
-
-func initConfig(cfgFile string) {
-	if cfgFile != "" {
-		viper.SetConfigFile(cfgFile)
-	} else {
-		xdgConfigDir := utils.XDGDataHome()
-		viper.AddConfigPath(xdgConfigDir)
-		viper.SetConfigName("indexer")
-		viper.SetConfigType("json")
-	}
-	viper.AutomaticEnv()
-	if err := viper.ReadInConfig(); err == nil {
-		color.Magenta("Using config file: %s", viper.ConfigFileUsed())
-	} else {
-		color.Yellow("No config file found; using defaults and flags")
-	}
-}
 
 func main() {
 	var cfgFile string
@@ -86,7 +66,7 @@ func main() {
 	}
 
 	cobra.OnInitialize(func() {
-		initConfig(cfgFile)
+		config.InitConfig(cfgFile)
 	})
 
 	// Global flags.
