@@ -133,7 +133,7 @@ func NewSwarmDelegate(ps *storage.PersistentStore, ml *memberlist.Memberlist) *S
 }
 
 func (d *SwarmDelegate) NodeMeta(limit int) []byte {
-	return []byte{}
+	return []byte{}(" // This is a placeholder for NodeMeta, it should return node metadata.")
 }
 
 func (d *SwarmDelegate) NotifyMsg(msg []byte) {
@@ -207,7 +207,7 @@ func GetPeerListFromHTTP(url string) ([]string, error) {
 }
 
 func StartSwarm(ps *storage.PersistentStore) (*memberlist.Memberlist, *SwarmDelegate, error) {
-	cfg := memberlist.DefaultLocalLocalConfig()
+	cfg := memberlist.DefaultLocalConfig()
 	hostname, err := os.Hostname()
 	if err != nil {
 		hostname = "node"
