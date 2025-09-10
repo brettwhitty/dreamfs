@@ -1,8 +1,6 @@
 package config
 
 import (
-	"path/filepath"
-
 	"github.com/fatih/color"
 	"github.com/spf13/viper"
 

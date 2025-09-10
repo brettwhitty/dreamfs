@@ -1,45 +1,62 @@
 package network
 
 import (
-	"context"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net"
-	"net/http"
 	"os"
-	"os/signal"
-	"path/filepath"
-	"runtime"
 	"strconv"
-	"strings"
 	"sync"
-	"sync/atomic"
-	"syscall"
 	"time"
 
-	"github.com/adrg/xdg"
-	"github.com/charmbracelet/bubbles/progress"
-	"github.com/charmbracelet/bubbles/spinner"
-	"github.com/charmbracelet/lipgloss"
 	"github.com/fatih/color"
 	"github.com/hashicorp/mdns"
 	"github.com/hashicorp/memberlist"
-	"github.com/karrick/godirwalk"
-	"github.com/shirou/gopsutil/disk"
-	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/zeebo/blake3"
-	bolt "go.etcd.io/bbolt"
 
 	"gnomatix/dreamfs/v2/pkg/metadata"
 	"gnomatix/dreamfs/v2/pkg/storage"
+	"gnomatix/dreamfs/v2/pkg/utils"
 )
 
 // ------------------------
 // HTTP Server: Replication and Peer List Endpoints
 // ------------------------
+
+var (
+	peerList      []string
+	peerListMutex sync.Mutex
+)
+
+func HandlePeerList(w http.ResponseWriter, r *http.Request) {
+	// Extract remote IP address.
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		host = r.RemoteAddr
+	}
+	peerAddr := fmt.Sprintf("%s:%d", host, viper.GetInt("swarmPort"))
+
+	peerListMutex.Lock()
+	defer peerListMutex.Unlock()
+	// Add if not already present.
+	found := false
+	for _, p := range peerList {
+		if p == peerAddr {
+			found = true
+			break
+		}
+	}
+	if !found {
+		peerList = append(peerList, peerAddr)
+		log.Printf("Added new peer via HTTP: %s", peerAddr)
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(peerList); err != nil {
+		http.Error(w, "failed to encode peer list", http.StatusInternalServerError)
+	}
+}
 
 func StartHTTPServer(addr string, ps *storage.PersistentStore) {
 	http.HandleFunc("/_changes", func(w http.ResponseWriter, r *http.Request) {
@@ -53,7 +70,7 @@ func StartHTTPServer(addr string, ps *storage.PersistentStore) {
 			color.Red("failed to encode changes: %v", err)
 		}
 	})
-	http.HandleFunc("/peerlist", HandlePeerList)
+	http.HandleFunc("/peerlist", HandlePeerList) // Corrected call
 
 	color.Blue("Starting HTTP server on %s", addr)
 	if err := http.ListenAndServe(addr, nil); err != nil {
@@ -103,13 +120,13 @@ func (f *FileMetaBroadcast) Finished()       {}
 
 type SwarmDelegate struct {
 	ps         *storage.PersistentStore
-	broadcasts *memberlist.TransmitLimitedQueue
+	Broadcasts *memberlist.TransmitLimitedQueue // Exported Broadcasts
 }
 
 func NewSwarmDelegate(ps *storage.PersistentStore, ml *memberlist.Memberlist) *SwarmDelegate {
 	d := &SwarmDelegate{ps: ps}
-	d.broadcasts = &memberlist.TransmitLimitedQueue{
-		NumNodes:       func() int { return len(ml.Members()) },
+	d.Broadcasts = &memberlist.TransmitLimitedQueue{ // Use Broadcasts
+		NumNodes: func() int { return len(ml.Members()) },
 		RetransmitMult: 3,
 	}
 	return d
@@ -133,7 +150,7 @@ func (d *SwarmDelegate) NotifyMsg(msg []byte) {
 }
 
 func (d *SwarmDelegate) GetBroadcasts(overhead, limit int) [][]byte {
-	return d.broadcasts.GetBroadcasts(overhead, limit)
+	return d.Broadcasts.GetBroadcasts(overhead, limit) // Use Broadcasts
 }
 
 func (d *SwarmDelegate) LocalState(join bool) []byte {
@@ -190,7 +207,7 @@ func GetPeerListFromHTTP(url string) ([]string, error) {
 }
 
 func StartSwarm(ps *storage.PersistentStore) (*memberlist.Memberlist, *SwarmDelegate, error) {
-	cfg := memberlist.DefaultLocalConfig()
+	cfg := memberlist.DefaultLocalLocalConfig()
 	hostname, err := os.Hostname()
 	if err != nil {
 		hostname = "node"

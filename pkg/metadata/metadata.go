@@ -5,13 +5,13 @@ import (
 )
 
 type FileMetadata struct {
-	ID       string                 `json:"_id"`    // Unique document ID (the fingerprint)
+	ID       string                 `json:"_id"`      // Unique document ID (the fingerprint)
 	IDString string                 `json:"idString"` // Composite string used to generate ID
 	HostID   string                 `json:"hostID"`   // ID of the host where the file was indexed
 	FilePath string                 `json:"filePath"`
 	Size     int64                  `json:"size"`
 	ModTime  string                 `json:"modTime"`
-	BLAKE3   string                 `json:"blake3"`   // BLAKE3 hash of the file content
+	BLAKE3   string                 `json:"blake3"` // BLAKE3 hash of the file content
 	Extra    map[string]interface{} `json:"-"`
 }
 
