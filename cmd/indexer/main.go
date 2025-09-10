@@ -32,10 +32,10 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/zeebo/blake3"
-	bolt "go.etcd.io/bbolt"
 
 	"gnomatix/dreamfs/v2/pkg/metadata"
 	"gnomatix/dreamfs/v2/pkg/storage"
+	"gnomatix/dreamfs/v2/pkg/network"
 )
 
 // ------------------------
@@ -231,7 +231,7 @@ func FingerprintFile(path string) (string, error) {
 }
 
 // Global swarm delegate.
-var swarmDelegate *SwarmDelegate
+var swarmDelegate *network.SwarmDelegate
 
 func ProcessFile(ctx context.Context, filePath string, ps *storage.PersistentStore, store bool) (string, error) {
         select {
@@ -272,7 +272,7 @@ func ProcessFile(ctx context.Context, filePath string, ps *storage.PersistentSto
                 if swarmDelegate != nil {
                         data, err := json.Marshal(meta)
                         if err == nil {
-                                swarmDelegate.broadcasts.QueueBroadcast(&fileMetaBroadcast{msg: data})
+                                swarmDelegate.broadcasts.QueueBroadcast(&network.FileMetaBroadcast{msg: data})
                         }
                 }
         }
@@ -426,7 +426,7 @@ func startHTTPServer(addr string, ps *storage.PersistentStore) {
                         color.Red("failed to encode changes: %v", err)
                 }
         })
-        http.HandleFunc("/peerlist", handlePeerList)
+        http.HandleFunc("/peerlist", network.HandlePeerList)
 
         color.Blue("Starting HTTP server on %s", addr)
         if err := http.ListenAndServe(addr, nil); err != nil {
@@ -562,7 +562,7 @@ func getPeerListFromHTTP(url string) ([]string, error) {
         return peers, nil
 }
 
-func startSwarm(ps *storage.PersistentStore) (*memberlist.Memberlist, *SwarmDelegate, error) {
+func startSwarm(ps *storage.PersistentStore) (*memberlist.Memberlist, *network.SwarmDelegate, error) {
         cfg := memberlist.DefaultLocalConfig()
         hostname, err := os.Hostname()
         if err != nil {
@@ -640,9 +640,8 @@ func startSwarm(ps *storage.PersistentStore) (*memberlist.Memberlist, *SwarmDele
                         n, err := ml.Join(peers)
                         if err != nil {
                                 log.Printf("Swarm: failed to join manual peers: %v", err)
-                        } else {
-                                log.Printf("Swarm: joined %d manual peers", n)
                         }
+                        log.Printf("Swarm: joined %d manual peers", n)
                 }
         }
 
@@ -657,12 +656,11 @@ func startSwarm(ps *storage.PersistentStore) (*memberlist.Memberlist, *SwarmDele
 func initConfig(cfgFile string) {
         if cfgFile != "" {
                 viper.SetConfigFile(cfgFile)
-        } else {
-                xdgConfigDir := xdg.ConfigHome
-                viper.AddConfigPath(xdgConfigDir)
-                viper.SetConfigName("indexer")
-                viper.SetConfigType("json")
         }
+        xdgConfigDir := xdg.DataHome
+        viper.AddConfigPath(xdgConfigDir)
+        viper.SetConfigName("indexer")
+        viper.SetConfigType("json")
         viper.AutomaticEnv()
         if err := viper.ReadInConfig(); err == nil {
                 color.Magenta("Using config file: %s", viper.ConfigFileUsed())
@@ -700,7 +698,7 @@ func main() {
                 },
         }
 
-        cobra.OnInitialize(func() {
+        cobra.OnInitialize(func() { 
                 initConfig(cfgFile)
         })
 
