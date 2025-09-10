@@ -412,17 +412,19 @@ func processAllDirectories(ctx context.Context, root string, ps *PersistentStore
 	if !quiet {
 		fmt.Printf("Processing root directory: %s\n", root)
 	}
-	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+	err := godirwalk.Walk(root, &godirwalk.Options{
+		Unsorted: true,
+		Callback: func(path string, de *godirwalk.Dirent) error {
 			select {
 			case <-ctx.Done():
 				return ctx.Err()
 			default:
 			}
 			// Only process files directly in root.
-			if info.IsDir() && path != root {
-				return filepath.SkipDir
+			if de.IsDir() && path != root {
+				return error(godirwalk.SkipNode)
 			}
-			if !info.IsDir() {
+			if !de.IsDir() {
 				_, err := ProcessFile(ctx, path, ps, true)
 				if err != nil && !quiet {
 					fmt.Printf("Error processing %s: %v\n", path, err)
@@ -437,13 +439,15 @@ func processAllDirectories(ctx context.Context, root string, ps *PersistentStore
 
 	// Collect all subdirectories.
 	var subdirs []string
-	err = filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+	err = godirwalk.Walk(root, &godirwalk.Options{
+		Unsorted: true,
+		Callback: func(path string, de *godirwalk.Dirent) error {
 			select {
 			case <-ctx.Done():
 				return ctx.Err()
 			default:
 			}
-			if info.IsDir() && path != root {
+			if de.IsDir() && path != root {
 				subdirs = append(subdirs, path)
 			}
 			return nil
@@ -465,13 +469,15 @@ func processAllDirectories(ctx context.Context, root string, ps *PersistentStore
 		}
 		// Collect files in the subdirectory.
 		var filesInDir []string
-		err = filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+		err = godirwalk.Walk(dir, &godirwalk.Options{
+			Unsorted: true,
+			Callback: func(path string, de *godirwalk.Dirent) error {
 				select {
 				case <-ctx.Done():
 					return ctx.Err()
 				default:
 				}
-				if !info.IsDir() {
+				if !de.IsDir() {
 					filesInDir = append(filesInDir, path)
 				}
 				return nil
