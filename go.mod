@@ -76,4 +76,4 @@ require (
 	golang.org/x/tools v0.35.0 // indirect
 )
 
-replace gnomatix/dreamfs/v2 => ./
+replace gnomatix/dreamfs/v2 => C:/Users/brett/work/dreamfs
