@@ -16,7 +16,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"sync/atomic"
+	
 	"syscall"
 	"time"
 
@@ -24,6 +24,7 @@ import (
 	"github.com/charmbracelet/bubbles/progress"
 	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/lipgloss"
+	
 	"github.com/fatih/color"
 	"github.com/hashicorp/mdns"
 	"github.com/hashicorp/memberlist"
@@ -40,6 +41,7 @@ var (
 	commit  = "none"
 	date    = "unknown"
 )
+
 
 // ------------------------
 // Configurable Defaults
@@ -492,14 +494,14 @@ func processAllDirectories(ctx context.Context, root string, ps *PersistentStore
 			continue
 		}
 		// Initialize progress bar and spinner.
-		// var sp spinner.Model
-		// if !quiet {
-		// 	sp = spinner.New()
-		// 	sp.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("205")).Bold(true)
-		// 	sp.Start()
-		// 	fmt.Printf("Processing files in %s...\n", dir)
-		// }
-		// p := progress.New(progress.WithDefaultGradient())
+		var sp spinner.Model
+		if !quiet {
+			sp = spinner.New()
+			sp.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("205")).Bold(true)
+			sp.Start()
+			fmt.Printf("Processing files in %s...\n", dir)
+		}
+		p := progress.New(progress.WithDefaultGradient())
 		var processed int64
 		for _, fpath := range filesInDir {
 			select {
@@ -512,15 +514,15 @@ func processAllDirectories(ctx context.Context, root string, ps *PersistentStore
 				fmt.Printf("Error processing %s: %v\n", fpath, err)
 			}
 			processed++
-			// if !quiet {
-			// 	percent := float64(processed) / float64(totalFiles)
-			// 	fmt.Printf("\r%s", lipgloss.NewStyle().Bold(true).Render(p.View(percent)))
-			// }
-		}
-		// if !quiet {
-		// 	sp.Stop()
-		// 	fmt.Println()
-		// }
+            if !quiet {
+                // percent := float64(processed) / float64(totalFiles)
+                fmt.Printf("\r%s", lipgloss.NewStyle().Bold(true).Render(p.View()))
+            }
+        }
+        if !quiet {
+            // sp.Stop()
+            fmt.Println()
+        }
 	}
 	return nil
 }
