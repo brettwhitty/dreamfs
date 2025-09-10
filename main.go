@@ -16,7 +16,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	
+	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -24,7 +24,6 @@ import (
 	"github.com/charmbracelet/bubbles/progress"
 	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/lipgloss"
-	
 	"github.com/fatih/color"
 	"github.com/hashicorp/mdns"
 	"github.com/hashicorp/memberlist"
@@ -35,13 +34,6 @@ import (
 	"github.com/zeebo/blake3"
 	bolt "go.etcd.io/bbolt"
 )
-
-var (
-	version = "dev"
-	commit  = "none"
-	date    = "unknown"
-)
-
 
 // ------------------------
 // Configurable Defaults
@@ -75,7 +67,7 @@ func handlePeerList(w http.ResponseWriter, r *http.Request) {
 	// Extract remote IP address.
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
-	host = r.RemoteAddr
+		host = r.RemoteAddr
 	}
 	peerAddr := fmt.Sprintf("%s:%d", host, viper.GetInt("swarmPort"))
 
@@ -253,7 +245,7 @@ func canonicalizePath(absPath string) (string, error) {
 				if len(parts) == 3 {
 					rest = "/" + parts[2]
 				}
-			return fmt.Sprintf("%s:/%s%s", server, share, rest), nil
+				return fmt.Sprintf("%s:/%s%s", server, share, rest), nil
 			}
 		}
 		return absPath, nil
@@ -422,7 +414,7 @@ func processAllDirectories(ctx context.Context, root string, ps *PersistentStore
 			}
 			// Only process files directly in root.
 			if de.IsDir() && path != root {
-				return error(godirwalk.SkipNode)
+				return godirwalk.SkipNode
 			}
 			if !de.IsDir() {
 				_, err := ProcessFile(ctx, path, ps, true)
@@ -498,7 +490,7 @@ func processAllDirectories(ctx context.Context, root string, ps *PersistentStore
 		if !quiet {
 			sp = spinner.New()
 			sp.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("205")).Bold(true)
-			// sp.Start()
+			sp.Start()
 			fmt.Printf("Processing files in %s...\n", dir)
 		}
 		p := progress.New(progress.WithDefaultGradient())
@@ -514,15 +506,15 @@ func processAllDirectories(ctx context.Context, root string, ps *PersistentStore
 				fmt.Printf("Error processing %s: %v\n", fpath, err)
 			}
 			processed++
-            if !quiet {
-                // percent := float64(processed) / float64(totalFiles)
-                fmt.Printf("%s", lipgloss.NewStyle().Bold(true).Render(p.View()))
-            }
-        }
-        if !quiet {
-            // // sp.Stop()
-            fmt.Println()
-        }
+			if !quiet {
+				percent := float64(processed) / float64(totalFiles)
+				fmt.Printf("\r%s", lipgloss.NewStyle().Bold(true).Render(p.View(percent)))
+			}
+		}
+		if !quiet {
+			sp.Stop()
+			fmt.Println()
+		}
 	}
 	return nil
 }
@@ -560,7 +552,7 @@ func dumpDB(ps *PersistentStore, format string) {
 	if err != nil {
 		log.Fatalf("failed to get metadata: %v", err)
 	}
-	switch format {
+	sswitch format {
 	case "json":
 		enc := json.NewEncoder(os.Stdout)
 		enc.SetIndent("", "  ")
@@ -588,15 +580,8 @@ type fileMetaBroadcast struct {
 	msg []byte
 }
 
-func (f *fileMetaBroadcast) Invalidates(other memberlist.Broadcast) bool {
-	return false
-}
-
-func (f *fileMetaBroadcast) Message() []byte {
-	return f.msg
-}
-
-func (f *fileMetaBroadcast) Finished() {}
+func (f *fileMetaBroadcast) Message() []byte { return f.msg }
+func (f *fileMetaBroadcast) Finished()       {}
 
 type SwarmDelegate struct {
 	ps         *PersistentStore
@@ -612,7 +597,7 @@ func NewSwarmDelegate(ps *PersistentStore, ml *memberlist.Memberlist) *SwarmDele
 	return d
 }
 
-func (d *SwarmDelegate) NodeMeta(limit int) []byte { 
+func (d *SwarmDelegate) NodeMeta(limit int) []byte {
 	return []byte{}
 }
 
@@ -839,8 +824,7 @@ func main() {
 	rootCmd.PersistentFlags().String("addr", ":8080", "Address to serve the replication endpoint")
 	// Default workers is 1 unless --all-procs is set.
 	rootCmd.PersistentFlags().Int("workers", defaultWorkers, "Number of concurrent workers for indexing (default: 1, use --all-procs to use all available CPUs)")
-	rootCmd.PersistentFlags().Bool("all-procs", false, "Use all available processors (overrides --workers)")
-	rootCmd.PersistentFlags().Bool("quiet", defaultQuiet, "Suppress spinner and progress messages")
+	rootCmd.PersistentFlags().Bool("all-procs", false, "Use all available processors (overrides --workers)")	rootCmd.PersistentFlags().Bool("quiet", defaultQuiet, "Suppress spinner and progress messages")
 	rootCmd.PersistentFlags().Bool("swarm", false, "Enable swarm mode for p2p replication")
 	rootCmd.PersistentFlags().StringSlice("peers", []string{}, "Comma-separated list of peer addresses to join")
 	rootCmd.PersistentFlags().Int("swarmPort", defaultSwarmPort, "Port for swarm memberlist")
@@ -951,15 +935,6 @@ func main() {
 	rootCmd.AddCommand(indexCmd)
 	rootCmd.AddCommand(serveCmd)
 	rootCmd.AddCommand(dumpCmd)
-
-	versionCmd := &cobra.Command{
-		Use:   "version",
-		Short: "Print the version number of indexer",
-		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Printf("indexer %s\ncommit %s\nbuilt at %s\n", version, commit, date)
-		},
-	}
-	rootCmd.AddCommand(versionCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		log.Fatal(err)
