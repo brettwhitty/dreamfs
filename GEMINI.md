@@ -36,8 +36,24 @@
 
 - The project is being developed in Golang exclusively
 
-- The primary git repository for this project should https://gitea.gnomatix.com/brett/dreamfs
+- We must aim to comply with Golang standards (see https://github.com/golang-standards/project-layout)
+
+- We must aim to use best practises described here: https://go.dev/doc/effective_go
+
+- The primary git repository for this project is https://gitea.gnomatix.com/brett/dreamfs
+
+- The project's code repository is hosted using Gitea
+
+- We can use the command line tool 'tea' to interact with Gitea
+
+    - 'tea issue list --repo dreamfs' will list issues in the project repo 'dreamfs'
+    - 'tea issue create --repo dreamfs --labels "label_1,label_2,..." --title "Issue Title" --description "Description of the issue (eg: error message or log)" --referenced-version "[COMMIT_HASH|TAG_NAME]"' for reporting each bug encountered
+    - 'tea comment <issue> "Comment to add"' to add a comment to the open issue, eg: when creating a bugfix branch to work on a fix, and add additional notes and logs
+    - See 'tea help' for additional commands and usage
+
+## Additional References
 
 - See 'README.md'
+- See 'BW-NOTES.md' for future improvement ideas
 
 - TODO: Add relevant notes here
