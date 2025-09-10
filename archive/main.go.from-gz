@@ -1,0 +1,201 @@
+package main
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"log"
+	"net"
+	"os"
+	"os/signal"
+	"path/filepath"
+	"runtime"
+	"strconv"
+	"sync"
+	"syscall"
+	"time"
+
+	"github.com/adrg/xdg"
+	"github.com/charmbracelet/bubbles/progress"
+	"github.com/charmbracelet/bubbles/table"
+	"github.com/charmbracelet/lipgloss"
+	"github.com/fatih/color"
+	"github.com/hashicorp/memberlist"
+	"github.com/karrick/godirwalk"
+	"github.com/shirou/gopsutil/cpu"
+	"github.com/shirou/gopsutil/disk"
+	"github.com/shirou/gopsutil/mem"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	"github.com/zeebo/blake3"
+	bolt "go.etcd.io/bbolt"
+)
+
+//
+// CONFIGURATION
+//
+const (
+	defaultWorkers       = 1
+	defaultSyncInterval  = 1 * time.Second
+	defaultBatchSize     = 100
+	defaultSwarmPort     = 7946
+	defaultQuiet         = false
+)
+
+func DefaultBoltDBPath() string {
+	return filepath.Join(xdg.DataHome, "indexer", "indexer.db")
+}
+
+//
+// PEER METRICS BROADCAST
+//
+type PeerMetrics struct {
+	Host       string  `json:"host"`
+	IP         string  `json:"ip"`
+	CPU        float64 `json:"cpu"`
+	MemoryGB   float64 `json:"memory"`
+	IOReadMB   float64 `json:"io_read"`
+	IOWriteMB  float64 `json:"io_write"`
+	FilesIndexed int    `json:"files_indexed"`
+}
+
+var peerMetrics = make(map[string]PeerMetrics)
+var peerMetricsMutex sync.Mutex
+
+func collectLocalMetrics(filesIndexed int) PeerMetrics {
+	cpuPercent, _ := cpu.Percent(0, false)
+	memStats, _ := mem.VirtualMemory()
+	ioStats, _ := disk.IOCounters()
+
+	var ioRead, ioWrite float64
+	for _, io := range ioStats {
+		ioRead += float64(io.ReadBytes) / (1024 * 1024)  // MB
+		ioWrite += float64(io.WriteBytes) / (1024 * 1024) // MB
+	}
+
+	host, _ := os.Hostname()
+	ip := getLocalIP()
+
+	return PeerMetrics{
+		Host:        host,
+		IP:          ip,
+		CPU:         cpuPercent[0],
+		MemoryGB:    float64(memStats.Used) / (1024 * 1024 * 1024),
+		IOReadMB:    ioRead,
+		IOWriteMB:   ioWrite,
+		FilesIndexed: filesIndexed,
+	}
+}
+
+func broadcastPeerMetrics(ml *memberlist.Memberlist, filesIndexed int) {
+	metrics := collectLocalMetrics(filesIndexed)
+	data, _ := json.Marshal(metrics)
+
+	peerMetricsMutex.Lock()
+	defer peerMetricsMutex.Unlock()
+	peerMetrics[metrics.IP] = metrics
+
+	ml.Broadcast(&peerMetaBroadcast{msg: data})
+}
+
+type peerMetaBroadcast struct {
+	msg []byte
+}
+
+func (p *peerMetaBroadcast) Message() []byte { return p.msg }
+func (p *peerMetaBroadcast) Finished()       {}
+
+//
+// TERMINAL UI
+//
+func renderPeerMetricsUI() {
+	peerMetricsMutex.Lock()
+	defer peerMetricsMutex.Unlock()
+
+	columns := []table.Column{
+		{Title: "Host", Width: 12},
+		{Title: "IP", Width: 15},
+		{Title: "CPU%", Width: 7},
+		{Title: "RAM GB", Width: 8},
+		{Title: "I/O RW", Width: 12},
+		{Title: "Files Indexed", Width: 15},
+	}
+
+	var rows []table.Row
+	var totalCPU, totalMemory, totalIORead, totalIOWrite float64
+	var totalFiles int
+
+	for _, peer := range peerMetrics {
+		rows = append(rows, table.Row{
+			peer.Host, peer.IP,
+			fmt.Sprintf("%.1f", peer.CPU),
+			fmt.Sprintf("%.1f", peer.MemoryGB),
+			fmt.Sprintf("%.1fMB/s", peer.IOReadMB+peer.IOWriteMB),
+			fmt.Sprintf("%d", peer.FilesIndexed),
+		})
+
+		totalCPU += peer.CPU
+		totalMemory += peer.MemoryGB
+		totalIORead += peer.IOReadMB
+		totalIOWrite += peer.IOWriteMB
+		totalFiles += peer.FilesIndexed
+	}
+
+	rows = append(rows, table.Row{
+		"CLUSTER TOTAL", "",
+		fmt.Sprintf("%.1f", totalCPU/float64(len(peerMetrics))),
+		fmt.Sprintf("%.1f", totalMemory),
+		fmt.Sprintf("%.1fMB/s", totalIORead+totalIOWrite),
+		fmt.Sprintf("%d", totalFiles),
+	})
+
+	t := table.New(columns)
+	t.SetRows(rows)
+
+	fmt.Println(lipgloss.NewStyle().Bold(true).Render("\nPEER STATUS"))
+	fmt.Println(t.Render())
+}
+
+//
+// MAIN FUNCTION
+//
+func main() {
+	var cfgFile string
+
+	rootCmd := &cobra.Command{Use: "indexer"}
+
+	cobra.OnInitialize(func() {
+		viper.SetDefault("dbpath", DefaultBoltDBPath())
+		viper.SetDefault("sync-interval", defaultSyncInterval)
+		viper.SetDefault("batch-size", defaultBatchSize)
+	})
+
+	indexCmd := &cobra.Command{
+		Use:   "index [directory]",
+		Short: "Index files and display peer metrics",
+		Args:  cobra.ExactArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			dir := args[0]
+
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+
+			sigCh := make(chan os.Signal, 1)
+			signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
+			go func() {
+				<-sigCh
+				cancel()
+			}()
+
+			// Simulate indexing + peer updates
+			for i := 0; i < 100000; i += 500 {
+				broadcastPeerMetrics(nil, i)
+				renderPeerMetricsUI()
+				time.Sleep(1 * time.Second)
+			}
+		},
+	}
+
+	rootCmd.AddCommand(indexCmd)
+	rootCmd.Execute()
+}
