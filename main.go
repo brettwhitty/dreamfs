@@ -422,7 +422,7 @@ func processAllDirectories(ctx context.Context, root string, ps *PersistentStore
 			}
 			// Only process files directly in root.
 			if de.IsDir() && path != root {
-				return godirwalk.SkipThisNode
+				return error(godirwalk.SkipNode)
 			}
 			if !de.IsDir() {
 				_, err := ProcessFile(ctx, path, ps, true)
@@ -498,7 +498,7 @@ func processAllDirectories(ctx context.Context, root string, ps *PersistentStore
 		if !quiet {
 			sp = spinner.New()
 			sp.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("205")).Bold(true)
-			sp.Start()
+			// sp.Start()
 			fmt.Printf("Processing files in %s...\n", dir)
 		}
 		p := progress.New(progress.WithDefaultGradient())
@@ -516,11 +516,11 @@ func processAllDirectories(ctx context.Context, root string, ps *PersistentStore
 			processed++
             if !quiet {
                 // percent := float64(processed) / float64(totalFiles)
-                fmt.Printf("\r%s", lipgloss.NewStyle().Bold(true).Render(p.View()))
+                fmt.Printf("%s", lipgloss.NewStyle().Bold(true).Render(p.View()))
             }
         }
         if !quiet {
-            // sp.Stop()
+            // // sp.Stop()
             fmt.Println()
         }
 	}
