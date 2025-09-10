@@ -134,7 +134,7 @@ func NewSwarmDelegate(ps *storage.PersistentStore, ml *memberlist.Memberlist) *S
 }
 
 func (d *SwarmDelegate) NodeMeta(limit int) []byte {
-	return []byte{} // This is a placeholder for NodeMeta, it should return node metadata.
+	return []byte{}
 }
 
 func (d *SwarmDelegate) NotifyMsg(msg []byte) {
