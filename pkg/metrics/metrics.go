@@ -3,20 +3,16 @@ package metrics
 import (
 	"encoding/json"
 	"fmt"
-	"net"
 	"os"
 	"sync"
-	"time"
 
 	"github.com/charmbracelet/bubbles/table"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/hashicorp/memberlist"
 	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/disk"
 	"github.com/shirou/gopsutil/mem"
 
 	"gnomatix/dreamfs/v2/pkg/network"
-	"gnomatix/dreamfs/v2/pkg/utils"
 )
 
 type PeerMetrics struct {
@@ -44,7 +40,7 @@ func CollectLocalMetrics(filesIndexed int) PeerMetrics {
 	}
 
 	host, _ := os.Hostname()
-	ip := utils.GetLocalIP() // Use utils.GetLocalIP()
+	ip := network.GetLocalIP()
 
 	return PeerMetrics{
 		Host:         host,
@@ -110,7 +106,7 @@ func RenderPeerMetricsUI() {
 		totalFiles += peer.FilesIndexed
 	}
 
-	ows = append(rows, table.Row{
+	rows = append(rows, table.Row{
 		"CLUSTER TOTAL", "",
 		fmt.Sprintf("%.1f", totalCPU/float64(len(peerMetrics))),
 		fmt.Sprintf("%.1f", totalMemory),

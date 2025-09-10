@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -18,6 +17,7 @@ import (
 	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/karrick/godirwalk"
+	"github.com/shirou/gopsutil/disk"
 	"github.com/spf13/viper"
 	"github.com/zeebo/blake3"
 

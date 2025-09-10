@@ -19,7 +19,6 @@ import (
 
 	"gnomatix/dreamfs/v2/pkg/metadata"
 	"gnomatix/dreamfs/v2/pkg/storage"
-	"gnomatix/dreamfs/v2/pkg/utils"
 )
 
 // ------------------------
@@ -238,7 +237,7 @@ func StartSwarm(ps *storage.PersistentStore) (*memberlist.Memberlist, *SwarmDele
 			log.Printf("No peers discovered from HTTP endpoint")
 		}
 	} else if !viper.GetBool("stealth") {
-		ip := net.ParseIP(utils.GetLocalIP())
+		ip := net.ParseIP(GetLocalIP())
 		srv, err := mdns.NewMDNSService(hostname, "_indexer._tcp", "", "", viper.GetInt("swarmPort"), []net.IP{ip}, []string{"Hello friend"})
 		if err != nil {
 			log.Printf("mDNS service error: %v", err)
