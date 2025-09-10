@@ -136,6 +136,7 @@ func NewSwarmDelegate(ps *storage.PersistentStore, ml *memberlist.Memberlist) *S
 func (d *SwarmDelegate) NodeMeta(limit int) []byte {
 	return []byte{}
 }
+
 func (d *SwarmDelegate) NotifyMsg(msg []byte) {
 	var meta metadata.FileMetadata
 	if err := json.Unmarshal(msg, &meta); err != nil {
