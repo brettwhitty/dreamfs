@@ -35,6 +35,7 @@ import (
 	bolt "go.etcd.io/bbolt"
 
 	"gnomatix/dreamfs/v2/pkg/metadata"
+	"gnomatix/dreamfs/v2/pkg/storage"
 )
 
 // ------------------------
@@ -94,66 +95,6 @@ func handlePeerList(w http.ResponseWriter, r *http.Request) {
 }
 
 // ------------------------
-// Persistent Storage (BoltDB)
-// ------------------------
-
-type PersistentStore struct {
-        db *bolt.DB
-}
-
-const boltBucketName = "metadata"
-
-func NewPersistentStore(dbPath string) (*PersistentStore, error) {
-        // Ensure the parent directory exists.
-        if err := os.MkdirAll(filepath.Dir(dbPath), 0755); err != nil {
-                return nil, err
-        }
-        db, err := bolt.Open(dbPath, 0600, &bolt.Options{Timeout: 1 * time.Second})
-        if err != nil {
-                return nil, fmt.Errorf("open bolt db: %w", err)
-        }
-        err = db.Update(func(tx *bolt.Tx) error {
-                _, err := tx.CreateBucketIfNotExists([]byte(boltBucketName))
-                return err
-        })
-        if err != nil {
-                return nil, fmt.Errorf("create bucket: %w", err)
-        }
-        return &PersistentStore{db: db}, nil
-}
-
-func (ps *PersistentStore) Close() error {
-        return ps.db.Close()
-}
-
-func (ps *PersistentStore) Put(meta metadata.FileMetadata) error {
-        data, err := json.Marshal(meta)
-        if err != nil {
-                return fmt.Errorf("marshal metadata: %w", err)
-        }
-        return ps.db.Update(func(tx *bolt.Tx) error {
-                b := tx.Bucket([]byte(boltBucketName))
-                return b.Put([]byte(meta.ID), data)
-        })
-}
-
-func (ps *PersistentStore) GetAll() ([]metadata.FileMetadata, error) {
-        var results []metadata.FileMetadata
-        err := ps.db.View(func(tx *bolt.Tx) error {
-                b := tx.Bucket([]byte(boltBucketName))
-                return b.ForEach(func(k, v []byte) error {
-                        var meta metadata.FileMetadata
-                        if err := json.Unmarshal(v, &meta); err != nil {
-                                return err
-                        }
-                        results = append(results, meta)
-                        return nil
-                })
-        })
-        return results, err
-}
-
-// ------------------------
 // Filesystem Partition Caching for Canonicalization
 // ------------------------
 
@@ -186,7 +127,7 @@ func getPartitions() ([]disk.PartitionStat, error) {
 func canonicalizePath(absPath string) (string, error) {
         // Windows UNC paths.
         if runtime.GOOS == "windows" {
-                if strings.HasPrefix(absPath, `\") {
+                if strings.HasPrefix(absPath, `\\`) {
                         parts := strings.SplitN(absPath[2:], `\`, 3)
                         if len(parts) >= 2 {
                                 server := parts[0]
@@ -292,7 +233,7 @@ func FingerprintFile(path string) (string, error) {
 // Global swarm delegate.
 var swarmDelegate *SwarmDelegate
 
-func ProcessFile(ctx context.Context, filePath string, ps *PersistentStore, store bool) (string, error) {
+func ProcessFile(ctx context.Context, filePath string, ps *storage.PersistentStore, store bool) (string, error) {
         select {
         case <-ctx.Done():
                 return "", ctx.Err()
@@ -345,7 +286,7 @@ func ProcessFile(ctx context.Context, filePath string, ps *PersistentStore, stor
 // processAllDirectories scans the root directory and processes its files,
 // then collects subdirectories and processes them one at a time. A spinner is
 // shown while reading directories, and a progress bar is updated per subdirectory.
-func processAllDirectories(ctx context.Context, root string, ps *PersistentStore) error {
+func processAllDirectories(ctx context.Context, root string, ps *storage.PersistentStore) error {
         quiet := viper.GetBool("quiet")
         if !quiet {
                 fmt.Println("Reading files...")
@@ -473,7 +414,7 @@ func processAllDirectories(ctx context.Context, root string, ps *PersistentStore
 // HTTP Server: Replication and Peer List Endpoints
 // ------------------------
 
-func startHTTPServer(addr string, ps *PersistentStore) {
+func startHTTPServer(addr string, ps *storage.PersistentStore) {
         http.HandleFunc("/_changes", func(w http.ResponseWriter, r *http.Request) {
                 metas, err := ps.GetAll()
                 if err != nil {
@@ -497,7 +438,7 @@ func startHTTPServer(addr string, ps *PersistentStore) {
 // Database Dump
 // ------------------------
 
-func dumpDB(ps *PersistentStore, format string) {
+func dumpDB(ps *storage.PersistentStore, format string) {
         metas, err := ps.GetAll()
         if err != nil {
                 log.Fatalf("failed to get metadata: %v", err)
@@ -534,11 +475,11 @@ func (f *fileMetaBroadcast) Message() []byte { return f.msg }
 func (f *fileMetaBroadcast) Finished()       {}
 
 type SwarmDelegate struct {
-        ps         *PersistentStore
+        ps         *storage.PersistentStore
         broadcasts *memberlist.TransmitLimitedQueue
 }
 
-func NewSwarmDelegate(ps *PersistentStore, ml *memberlist.Memberlist) *SwarmDelegate {
+func NewSwarmDelegate(ps *storage.PersistentStore, ml *memberlist.Memberlist) *SwarmDelegate {
         d := &SwarmDelegate{ps: ps}
         d.broadcasts = &memberlist.TransmitLimitedQueue{
                 NumNodes: func() int { return len(ml.Members()) },
@@ -621,7 +562,7 @@ func getPeerListFromHTTP(url string) ([]string, error) {
         return peers, nil
 }
 
-func startSwarm(ps *PersistentStore) (*memberlist.Memberlist, *SwarmDelegate, error) {
+func startSwarm(ps *storage.PersistentStore) (*memberlist.Memberlist, *SwarmDelegate, error) {
         cfg := memberlist.DefaultLocalConfig()
         hostname, err := os.Hostname()
         if err != nil {
@@ -661,13 +602,11 @@ func startSwarm(ps *PersistentStore) (*memberlist.Memberlist, *SwarmDelegate, er
                         mdnsServer, err := mdns.NewServer(&mdns.Config{Zone: srv})
                         if err != nil {
                                 log.Printf("mDNS server error: %v", err)
-                        } else {
-                                log.Printf("mDNS auto-discovery enabled")
-                                go func() {
-                                        <-time.After(10 * time.Minute)
-                                        mdnsServer.Shutdown()
-                                }()
                         }
+                        go func() {
+                                <-time.After(10 * time.Minute)
+                                mdnsServer.Shutdown()
+                        }()
                 }
                 var discovered []string
                 entriesCh := make(chan *mdns.ServiceEntry, 4)
@@ -690,9 +629,8 @@ func startSwarm(ps *PersistentStore) (*memberlist.Memberlist, *SwarmDelegate, er
                         n, err := ml.Join(discovered)
                         if err != nil {
                                 log.Printf("Swarm auto-discovery join error: %v", err)
-                        } else {
-                                log.Printf("Swarm auto-discovery: joined %d peers", n)
                         }
+                        log.Printf("Swarm auto-discovery: joined %d peers", n)
                 } else {
                         log.Printf("Swarm auto-discovery: no peers found")
                 }
@@ -825,7 +763,6 @@ func main() {
                         signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
                         go func() {
                                 <-sigCh
-                                color.Yellow("\nReceived shutdown signal, exiting gracefully...")
                                 cancel()
                         }()
 
