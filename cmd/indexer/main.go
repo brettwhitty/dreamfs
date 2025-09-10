@@ -26,35 +26,35 @@ import (
 // Global swarm delegate.
 var swarmDelegate *network.SwarmDelegate
 
-func main() {
-	var cfgFile string
+var cfgFile string // Declare cfgFile at package level
 
-	rootCmd := &cobra.Command{
-		Use:   "indexer [path]",
-		Short: "Index files and expose a replication source endpoint",
-		Run: func(cmd *cobra.Command, args []string) {
-			// Default: list file fingerprints (like md5sum) for each file.
-			if len(args) < 1 {
-				cmd.Help()
-				return
+var rootCmd = &cobra.Command{
+	Use:   "indexer [path]",
+	Short: "Index files and expose a replication source endpoint",
+	Run: func(cmd *cobra.Command, args []string) {
+		// Default: list file fingerprints (like md5sum) for each file.
+		if len(args) < 1 {
+			cmd.Help()
+			return
+		}
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		sigCh := make(chan os.Signal, 1)
+		signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
+		go func() {
+			<-sigCh
+			cancel()
+		}()
+		for _, path := range args {
+			_, err := fileprocessor.ProcessFile(ctx, path, nil, false)
+			if err != nil {
+				log.Printf("Error processing %s: %v", path, err)
 			}
-			ctx, cancel := context.WithCancel(context.Background())
-			defer cancel()
-			sigCh := make(chan os.Signal, 1)
-			signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
-			go func() {
-				<-sigCh
-				cancel()
-			}()
-			for _, path := range args {
-				_, err := fileprocessor.ProcessFile(ctx, path, nil, false)
-				if err != nil {
-					log.Printf("Error processing %s: %v", path, err)
-				}
-			}
-		},
-	}
+		}
+	},
+}
 
+func init() { // Use init function for Cobra setup
 	cobra.OnInitialize(func() {
 		config.InitConfig(cfgFile)
 		utils.SetHostID()
@@ -66,7 +66,8 @@ func main() {
 	rootCmd.PersistentFlags().String("addr", ":8080", "Address to serve the replication endpoint")
 	// Default workers is 1 unless --all-procs is set.
 	rootCmd.PersistentFlags().Int("workers", config.DefaultWorkers, "Number of concurrent workers for indexing (default: 1, use --all-procs to use all available CPUs)")
-	rootCmd.PersistentFlags().Bool("all-procs", false, "Use all available processors (overrides --workers)")	rootCmd.PersistentFlags().Bool("quiet", config.DefaultQuiet, "Suppress spinner and progress messages")
+	rootCmd.PersistentFlags().Bool("all-procs", false, "Use all available processors (overrides --workers)")
+	rootCmd.PersistentFlags().Bool("quiet", config.DefaultQuiet, "Suppress spinner and progress messages")
 	rootCmd.PersistentFlags().Bool("swarm", false, "Enable swarm mode for p2p replication")
 	rootCmd.PersistentFlags().StringSlice("peers", []string{}, "Comma-separated list of peer addresses to join")
 	rootCmd.PersistentFlags().Int("swarmPort", config.DefaultSwarmPort, "Port for swarm memberlist")
@@ -187,7 +188,9 @@ func main() {
 		},
 	}
 	rootCmd.AddCommand(monitorCmd)
+}
 
+func main() {
 	if err := rootCmd.Execute(); err != nil {
 		log.Fatal(err)
 	}
