@@ -35,6 +35,12 @@ import (
 	bolt "go.etcd.io/bbolt"
 )
 
+var (
+	version = "dev"
+	commit  = "none"
+	date    = "unknown"
+)
+
 // ------------------------
 // Configurable Defaults
 // ------------------------
@@ -936,6 +942,15 @@ func main() {
 	rootCmd.AddCommand(indexCmd)
 	rootCmd.AddCommand(serveCmd)
 	rootCmd.AddCommand(dumpCmd)
+
+	versionCmd := &cobra.Command{
+		Use:   "version",
+		Short: "Print the version number of indexer",
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Printf("indexer %s\ncommit %s\nbuilt at %s\n", version, commit, date)
+		},
+	}
+	rootCmd.AddCommand(versionCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		log.Fatal(err)
