@@ -706,7 +706,7 @@ func main() {
 
         // Global flags.
         rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default: indexer.json in XDG config directory)")
-        rootCmd.PersistentFlags().String("dbpath", DefaultBoltDBPath(), "Path to the BoltDB file (default: XDG data directory)")
+        rootCmd.PersistentFlags().String("dbpath", storage.DefaultBoltDBPath(), "Path to the BoltDB file (default: XDG data directory)")
         rootCmd.PersistentFlags().String("addr", ":8080", "Address to serve the replication endpoint")
         // Default workers is 1 unless --all-procs is set.
         rootCmd.PersistentFlags().Int("workers", defaultWorkers, "Number of concurrent workers for indexing (default: 1, use --all-procs to use all available CPUs)")
@@ -735,7 +735,7 @@ func main() {
                 Run: func(cmd *cobra.Command, args []string) {
                         dir := args[0]
                         dbPath := viper.GetString("dbpath")
-                        ps, err := NewPersistentStore(dbPath)
+                        ps, err := storage.NewPersistentStore(dbPath)
                         if err != nil {
                                 color.Red("failed to open persistent store: %v", err)
                                 os.Exit(1)
@@ -779,7 +779,7 @@ func main() {
                 Run: func(cmd *cobra.Command, args []string) {
                         dbPath := viper.GetString("dbpath")
                         addr := viper.GetString("addr")
-                        ps, err := NewPersistentStore(dbPath)
+                        ps, err := storage.NewPersistentStore(dbPath)
                         if err != nil {
                                 color.Red("failed to open persistent store: %v", err)
                                 os.Exit(1)
@@ -805,7 +805,7 @@ func main() {
                 Run: func(cmd *cobra.Command, args []string) {
                         dbPath := viper.GetString("dbpath")
                         format := viper.GetString("format")
-                        ps, err := NewPersistentStore(dbPath)
+                        ps, err := storage.NewPersistentStore(dbPath)
                         if err != nil {
                                 color.Red("failed to open persistent store: %v", err)
                                 os.Exit(1)
