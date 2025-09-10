@@ -117,6 +117,9 @@ type FileMetaBroadcast struct {
 
 func (f *FileMetaBroadcast) Message() []byte { return f.Msg }
 func (f *FileMetaBroadcast) Finished()       {}
+func (f *FileMetaBroadcast) Invalidates(other memberlist.Broadcast) bool {
+	return false
+}
 
 type PeerMetaBroadcast struct {
 	Msg []byte
