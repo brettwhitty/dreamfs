@@ -69,7 +69,7 @@ func CanonicalizePath(absPath string) (string, error) {
 				if len(parts) == 3 {
 					rest = "/" + parts[2]
 				}
-				return fmt.Sprintf("%s:%s%s", server, share, rest), nil
+				return fmt.Sprintf("%s:/%s%s", server, share, rest), nil
 			}
 		}
 		return absPath, nil
@@ -214,7 +214,7 @@ func ProcessFile(ctx context.Context, filePath string, ps *storage.PersistentSto
 		if swarmDelegate != nil {
 			data, err := json.Marshal(meta)
 			if err == nil {
-				swarmDelegate.broadcasts.QueueBroadcast(&network.FileMetaBroadcast{msg: data})
+				swarmDelegate.Broadcasts.QueueBroadcast(&network.FileMetaBroadcast{Msg: data})
 			}
 		}
 	}

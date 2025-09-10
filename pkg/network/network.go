@@ -124,6 +124,9 @@ type PeerMetaBroadcast struct {
 
 func (p *PeerMetaBroadcast) Message() []byte { return p.Msg }
 func (p *PeerMetaBroadcast) Finished()       {}
+func (p *PeerMetaBroadcast) Invalidates(other memberlist.Broadcast) bool {
+	return false
+}
 
 type SwarmDelegate struct {
 	ps         *storage.PersistentStore
