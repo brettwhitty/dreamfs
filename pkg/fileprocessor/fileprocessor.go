@@ -69,7 +69,7 @@ func CanonicalizePath(absPath string) (string, error) {
 				if len(parts) == 3 {
 					rest = "/" + parts[2]
 				}
-				return fmt.Sprintf("%s:/%s%s", server, share, rest), nil
+			return fmt.Sprintf("%s:/%s%s", server, share, rest), nil
 			}
 		}
 		return absPath, nil
@@ -247,7 +247,7 @@ func ProcessAllDirectories(ctx context.Context, root string, ps *storage.Persist
 			}
 			// Only process files directly in root.
 			if de.IsDir() && path != root {
-				return godirwalk.SkipNode
+				return godirwalk.SkipThis
 			}
 			if !de.IsDir() {
 				_, err := ProcessFile(ctx, path, ps, true)
@@ -323,7 +323,12 @@ func ProcessAllDirectories(ctx context.Context, root string, ps *storage.Persist
 		if !quiet {
 			sp = spinner.New()
 			sp.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("205")).Bold(true)
-			sp.Start()
+			go func() {
+				for {
+					sp.Tick()
+					time.Sleep(sp.Spinner.FPS)
+				}
+			}()
 			fmt.Printf("Processing files in %s...\n", dir)
 		}
 		p := progress.New(progress.WithDefaultGradient())
@@ -341,11 +346,10 @@ func ProcessAllDirectories(ctx context.Context, root string, ps *storage.Persist
 			processed++
 			if !quiet {
 				percent := float64(processed) / float64(totalFiles)
-				fmt.Printf("\r%s", lipgloss.NewStyle().Bold(true).Render(p.View(percent)))
+				fmt.Printf("\r%s", p.ViewAs(percent))
 			}
 		}
 		if !quiet {
-			sp.Stop()
 			fmt.Println()
 		}
 	}
