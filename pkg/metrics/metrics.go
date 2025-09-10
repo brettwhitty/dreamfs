@@ -63,15 +63,8 @@ func BroadcastPeerMetrics(d *network.SwarmDelegate, filesIndexed int) {
 	peerMetrics[metrics.IP] = metrics
 
 	// Use the broadcasts queue from the SwarmDelegate
-	d.Broadcasts.QueueBroadcast(&network.PeerMetaBroadcast{msg: data})
+	d.Broadcasts.QueueBroadcast(&network.PeerMetaBroadcast{Msg: data})
 }
-
-type PeerMetaBroadcast struct {
-	msg []byte
-}
-
-func (p *PeerMetaBroadcast) Message() []byte { return p.msg }
-func (p *PeerMetaBroadcast) Finished()       {}
 
 func RenderPeerMetricsUI() {
 	peerMetricsMutex.Lock()
@@ -91,7 +84,8 @@ func RenderPeerMetricsUI() {
 	var totalFiles int
 
 	for _, peer := range peerMetrics {
-		rows = append(rows, table.Row{
+	
+rows = append(rows, table.Row{
 			peer.Host, peer.IP,
 			fmt.Sprintf("%.1f", peer.CPU),
 			fmt.Sprintf("%.1f", peer.MemoryGB),
@@ -106,7 +100,8 @@ func RenderPeerMetricsUI() {
 		totalFiles += peer.FilesIndexed
 	}
 
-	rows = append(rows, table.Row{
+
+rows = append(rows, table.Row{
 		"CLUSTER TOTAL", "",
 		fmt.Sprintf("%.1f", totalCPU/float64(len(peerMetrics))),
 		fmt.Sprintf("%.1f", totalMemory),

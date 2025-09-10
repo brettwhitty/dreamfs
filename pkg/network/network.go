@@ -112,11 +112,18 @@ func DumpDB(ps *storage.PersistentStore, format string) {
 // ------------------------
 
 type FileMetaBroadcast struct {
-	msg []byte
+	Msg []byte
 }
 
-func (f *FileMetaBroadcast) Message() []byte { return f.msg }
+func (f *FileMetaBroadcast) Message() []byte { return f.Msg }
 func (f *FileMetaBroadcast) Finished()       {}
+
+type PeerMetaBroadcast struct {
+	Msg []byte
+}
+
+func (p *PeerMetaBroadcast) Message() []byte { return p.Msg }
+func (p *PeerMetaBroadcast) Finished()       {}
 
 type SwarmDelegate struct {
 	ps         *storage.PersistentStore
