@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"runtime"
 	"syscall"
+	"time"
 
 	"github.com/fatih/color"
 	"github.com/hashicorp/memberlist"
@@ -19,6 +20,7 @@ import (
 	"gnomatix/dreamfs/v2/pkg/fileprocessor"
 	"gnomatix/dreamfs/v2/pkg/utils"
 	"gnomatix/dreamfs/v2/pkg/config"
+	"gnomatix/dreamfs/v2/pkg/metrics"
 )
 
 // Global swarm delegate.
