@@ -1,2 +1,3 @@
 [tools]
+direnv = "latest"
 go = "latest"
