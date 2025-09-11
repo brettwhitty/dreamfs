@@ -21,3 +21,4 @@ dreamfs-*
 .gemini/tmp
 session_state
 .gemini
+indexer.db
