@@ -1,3 +1,11 @@
+[settings]
+env_file = '.env'
+idiomatic_version_file_enable_tools = ['node']
+experimental = true
+
+[env]
+JIRA_REPORTER = "jira@gnomatix.com"
+JIRA_ASSIGNEE = "support@gnomatix.com"
+
 [tools]
-direnv = "latest"
-go = "latest"
+go = "1.25.1"
