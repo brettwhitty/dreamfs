@@ -18,4 +18,6 @@ go.work
 dreamfs-*
 
 # Gemini CLI internal directory
-.gemini/
+.gemini/tmp
+session_state
+.gemini
