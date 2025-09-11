@@ -16,3 +16,6 @@ go.work
 
 # DreamFS builds
 dreamfs-*
+
+# Gemini CLI internal directory
+.gemini/
