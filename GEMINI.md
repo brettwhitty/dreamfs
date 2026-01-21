@@ -179,3 +179,8 @@ To optimize performance and ensure accurate recall, the following workflow impro
 
 4.  **Leveraging ZFS Snapshots and Directory Diffs:**
     *   The availability of ZFS snapshotting and recursive directory diff tools will be considered for future investigations, particularly when tracking changes, identifying discrepancies, or performing system state comparisons.
+5.  **Non-Interactive Tool Protocol (`tea`):**
+    *   To prevent interactive prompts (e.g., login fallbacks) during batch execution, the `tea` CLI must always be called with explicit context flags.
+    *   **Mandatory Flags**: `--login admin` and `--repo brett/dreamfs` must be included in every command.
+    *   **Usage Pattern**: `tea <command> --login admin --repo brett/dreamfs [options]`
+    *   **Comments**: When viewing issues, always use `--comments` or `--comments-all` to prevent interactive prompts for comment visibility.
