@@ -15,6 +15,8 @@
 
 # git-crypt protection
 archive/** filter=git-crypt diff=git-crypt
+docs/gemini-instructions/** filter=git-crypt diff=git-crypt
+docs/gemini-local-tools/** filter=git-crypt diff=git-crypt
 
 ## NOTES:
 ##
