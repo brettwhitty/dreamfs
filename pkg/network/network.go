@@ -139,7 +139,7 @@ type SwarmDelegate struct {
 func NewSwarmDelegate(ps *storage.PersistentStore, ml *memberlist.Memberlist) *SwarmDelegate {
 	d := &SwarmDelegate{ps: ps}
 	d.Broadcasts = &memberlist.TransmitLimitedQueue{ // Use Broadcasts
-		NumNodes: func() int { return len(ml.Members()) },
+		NumNodes:       func() int { return len(ml.Members()) },
 		RetransmitMult: 3,
 	}
 	return d

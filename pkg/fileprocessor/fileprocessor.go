@@ -27,6 +27,15 @@ import (
 	"gnomatix/dreamfs/v2/pkg/utils"
 )
 
+// Define styled output using Lip Gloss.
+var (
+	successStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("2")).Bold(true)
+	errorStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("1")).Bold(true)
+	warnStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("3")).Bold(true)
+	infoStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("4")).Bold(true)
+	accentStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("5")).Bold(true)
+)
+
 // ------------------------
 // Filesystem Partition Caching for Canonicalization
 // ------------------------
@@ -69,7 +78,7 @@ func CanonicalizePath(absPath string) (string, error) {
 				if len(parts) == 3 {
 					rest = "/" + parts[2]
 				}
-			return fmt.Sprintf("%s:/%s%s", server, share, rest), nil
+				return fmt.Sprintf("%s:/%s%s", server, share, rest), nil
 			}
 		}
 		return absPath, nil
@@ -318,20 +327,13 @@ func ProcessAllDirectories(ctx context.Context, root string, ps *storage.Persist
 		if totalFiles == 0 {
 			continue
 		}
-		// Initialize progress bar and spinner.
-		var sp spinner.Model
+		// Initialize progress bar.
+		var p progress.Model
 		if !quiet {
-			sp = spinner.New()
-			sp.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("205")).Bold(true)
-			go func() {
-				for {
-					sp.Tick()
-					time.Sleep(sp.Spinner.FPS)
-				}
-			}()
+			p = progress.New(progress.WithDefaultGradient())
 			fmt.Printf("Processing files in %s...\n", dir)
 		}
-		p := progress.New(progress.WithDefaultGradient())
+
 		var processed int64
 		for _, fpath := range filesInDir {
 			select {
@@ -346,7 +348,8 @@ func ProcessAllDirectories(ctx context.Context, root string, ps *storage.Persist
 			processed++
 			if !quiet {
 				percent := float64(processed) / float64(totalFiles)
-				fmt.Printf("\r%s", p.ViewAs(percent))
+				p.Set(percent)
+				fmt.Printf("%s", p.View())
 			}
 		}
 		if !quiet {
