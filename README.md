@@ -1,35 +1,90 @@
-# DreamFS
+# DreamFS: The Swarm Filesystem Indexer
 
-DreamFS is a command-line tool intended to provide a lightweight,
-cross-platform, zero-config distributed datastore for extended
-file attributes.
+![DreamFS Logo](assets/images/firefoxismybitchnowthxgoogle.png)
 
-## Why
+> "I have a dream, that one day, I will know exactly where all my files are."
 
-### Lightweight
+DreamFS is a lightweight, cross-platform, zero-config distributed datastore for extended file attributes. It provides a unified view of metadata across your entire digital swarm—from Linux servers and NAS devices to Windows desktops and beyond.
 
-- DreamFS supports indexing files across machines of all types
-- Can be run as a daemon on desktops, servers, or NAS devices
+---
 
-### Cross-Platform
+## 🌩️ The Swarm Vision
 
-- DreamFS abstracts away the local filesystem, providing access to a unified view of metadata
-- If the system has a terminal, the DreamFS command line functionality is exactly the same
-- Optional two-way synchronization of extended attributes across all filesystems that support it
+![Swarm Vision](assets/images/ihaveadreamanditsadistributedvirtuallocalfirstfilesystem.png)
 
-### Command-Line First
+DreamFS is designed for the modern, fragmented data landscape. It doesn't just index files; it creates a living, breathing distributed index that finds its peers automatically and replicates metadata across the swarm.
 
-- DreamFS provides a simple, hierarchical command structure as used in other popular tools (eg: docker)
-- Command-line first allows for incorporation into more complex, user-defined workflows
+- **Lightweight**: Run it as a daemon on anything from a Raspberry Pi to a production cluster.
+- **Zero-Config**: Built-in mDNS and HTTP-based discovery—just start it and watch the swarm grow.
+- **Content-First**: Files are judged by the content of their sectors, not the case of their strings.
 
-### Zero-config Distributed Datastore
+---
 
-- When you run the command, or start up a daemon, DreamFS finds its peers and has access to all their data
-- File contents can be processed using streaming swarm computes, where appropriate
-- Scale out the performance of file indexing as needed by starting as many instances as required
+## 🐧🍎🪟 Cross-Platform Integrity
 
-## How
+![Compatibility](assets/images/samesamebutdifferent.png)
 
-DreamFS is implemented in Golang.
+"Same same, but different." Whether you're on Windows, macOS, or Linux, DreamFS abstracts away filesystem quirks to provide a consistent canonical view. It intelligently handles UNC paths, network mounts (NFS/CIFS), and case-sensitivity differences to ensure physical uniqueness is preserved across the wire.
 
-TODO: Write more text here.
+---
+
+## 🛠️ Features
+
+- **Blazing Fast Fingerprinting**: Uses `BLAKE3` with an intelligent sampling strategy for large files.
+- **P2P Replication**: Powered by `hashicorp/memberlist` for robust, decentralized metadata propagation.
+- **Canonicalization**: Intelligent path mapping for cross-platform metadata consistency.
+- **Local-First**: Your data stays on your nodes, governed by the rules of the swarm.
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+- [Go](https://go.dev/dl/) 1.25.1+
+- [mise](https://mise.jdx.dev/) (recommended for environment management)
+
+### Installation
+```bash
+# Clone the repository
+git clone https://gitea.gnomatix.com/brett/dreamfs.git
+cd dreamfs
+
+# Build the indexer
+go build -o indexer cmd/indexer/main.go
+```
+
+### Usage
+
+**Initialize an Index:**
+```bash
+./indexer index /path/to/your/data
+```
+
+**Start a Swarm Node:**
+```bash
+./indexer serve --swarm --addr :8080
+```
+
+**Monitor the Swarm:**
+```bash
+./indexer monitor --swarm
+```
+
+---
+
+## 🧠 Philosophy
+
+![Content over Path](assets/images/thisreallyisntracistitsaboutfreedom.png)
+
+DreamFS is built on the principle that metadata should be as portable as the ideas it represents. We prioritize **physical uniqueness** over path-based indexing, ensuring that your data remains yours, reachable and verifiable, no matter which platform it currently calls home.
+
+---
+
+## 📝 License
+
+DreamFS is property of GNOMATIX. All rights reserved.
+
+---
+
+\*DreamFS is a user-dictated, AI-hallucinated & "vibe"-coded fantabulation. It does not currently exist.
+\*\*DreamFS has been granted provisional approval by the FDA under emergency use authorization; as a consequence, GNOMATIX has been granted 90-year, zero-fault protection against any claims of data loss, blindness, infertility, or loss of tangible presence in physical reality; contact your local state representative for more information
