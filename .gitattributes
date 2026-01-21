@@ -13,6 +13,9 @@
 #*.png binary
 #*.jpg binary
 
+# git-crypt protection
+archive/** filter=git-crypt diff=git-crypt
+
 ## NOTES:
 ##
 ## Set global config to auto
