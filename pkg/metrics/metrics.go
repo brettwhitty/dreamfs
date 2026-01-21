@@ -84,8 +84,8 @@ func RenderPeerMetricsUI() {
 	var totalFiles int
 
 	for _, peer := range peerMetrics {
-	
-rows = append(rows, table.Row{
+
+		rows = append(rows, table.Row{
 			peer.Host, peer.IP,
 			fmt.Sprintf("%.1f", peer.CPU),
 			fmt.Sprintf("%.1f", peer.MemoryGB),
@@ -100,8 +100,7 @@ rows = append(rows, table.Row{
 		totalFiles += peer.FilesIndexed
 	}
 
-
-rows = append(rows, table.Row{
+	rows = append(rows, table.Row{
 		"CLUSTER TOTAL", "",
 		fmt.Sprintf("%.1f", totalCPU/float64(len(peerMetrics))),
 		fmt.Sprintf("%.1f", totalMemory),

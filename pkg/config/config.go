@@ -10,11 +10,11 @@ import (
 )
 
 const (
-	DefaultSwarmPort   = 7946
-	DefaultWorkers     = 1 // unless --all-procs is provided
-	DefaultQuiet       = false
-	DefaultStealth     = false
-	DefaultPeerListURL = ""
+	DefaultSwarmPort    = 7946
+	DefaultWorkers      = 1 // unless --all-procs is provided
+	DefaultQuiet        = false
+	DefaultStealth      = false
+	DefaultPeerListURL  = ""
 	DefaultSyncInterval = 1 * time.Second
 	DefaultBatchSize    = 100
 )
