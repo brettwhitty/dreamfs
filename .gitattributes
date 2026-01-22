@@ -1,0 +1,38 @@
+# Set the default behavior, in case people don't have core.autocrlf set.
+* text=auto
+
+# Explicitly declare text files you want to always be normalized and converted
+# to native line endings on checkout.
+#*.c text
+#*.h text
+
+# Declare files that will always have CRLF line endings on checkout.
+#*.sln text eol=crlf
+
+# Denote all files that are truly binary and should not be modified.
+#*.png binary
+#*.jpg binary
+
+# git-crypt protection
+archive/** filter=git-crypt diff=git-crypt
+docs/gemini-instructions/** filter=git-crypt diff=git-crypt
+docs/gemini-local-tools/** filter=git-crypt diff=git-crypt
+
+## NOTES:
+##
+## Set global config to auto
+## Windows:
+##   git config --global core.autocrlf true
+## Linux / macOS: 
+##   git config --global core.autocrlf input
+##
+## To avoid losing any local changes to files in the repository,
+## add and commit any outstanding changes by running the following commands.
+##
+##   git add . -u
+##   git commit -m "Saving files before refreshing line endings"
+##
+## To update all files on the current branch to reflect the new configuration,
+## run the following command.
+##
+##   git add --renormalize .
