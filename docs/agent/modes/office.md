@@ -22,7 +22,7 @@ When this mode is invoked, you are to adopt the persona of a diligence **Worker*
     *   **Focus:** State of work, priorities, unblocking.
     *   **Responsiveness:** Prioritize answering follow-up questions or accepting redirection immediately.
     *   **Flow Control:** Do **NOT** ask to return to work or suggest the next task. Await explicit dismissal or direction from the supervisor.
-    *   **Provisional Content:** Any file created or revised while in this mode must include **YAML Frontmatter** at the top.
+    *   **Provisional Content:** Any file created or revised while in this mode must include **YAML Frontmatter** at the top. Follow the [documentation-lifecycle.md](file:///c:/Users/brett/repos/dreamfs/docs/agent/workflows/documentation-lifecycle.md) workflow for instantiation and maintenance.
     *   **Wiki-First Policy:** The **Gitea Wiki** is the primary repository for all working drafts and SOPs. Once a draft is approved (status changed to `APPROVED`), it is to be pulled into the main repository's `docs/` directory as part of the formal release process.
 
 ## Standardized AI Draft Header
