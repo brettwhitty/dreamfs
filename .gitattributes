@@ -36,3 +36,6 @@ docs/gemini-local-tools/** filter=git-crypt diff=git-crypt
 ## run the following command.
 ##
 ##   git add --renormalize .
+
+.new/** filter=git-crypt diff=git-crypt
+.bak/** filter=git-crypt diff=git-crypt
