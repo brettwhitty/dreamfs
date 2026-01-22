@@ -1,8 +1,7 @@
-# DreamFS: The Swarm Filesystem Indexer
+# DreamFS: Distributed Datastore for Extended File Attributes
 
-![DreamFS Logo](assets/images/firefoxismybitchnowthxgoogle.png)
+![DreamFS Logo](assets/images/dreamfs-logo-vortex.png)
 
-> "I have a dream, that one day, I will know exactly where all my files are."
 
 DreamFS is a lightweight, cross-platform, zero-config distributed datastore for extended file attributes. It provides a unified view of metadata across your entire digital swarm—from Linux servers and NAS devices to Windows desktops and beyond.
 
@@ -10,7 +9,7 @@ DreamFS is a lightweight, cross-platform, zero-config distributed datastore for 
 
 ## 🌩️ The Swarm Vision
 
-![Swarm Vision](assets/images/ihaveadreamanditsadistributedvirtuallocalfirstfilesystem.png)
+!["I have a dream, that one day, I will know exactly where all my files are."](assets/images/dreamfs-vision-metropolis.png)
 
 DreamFS is designed for the modern, fragmented data landscape. It doesn't just index files; it creates a living, breathing distributed index that finds its peers automatically and replicates metadata across the swarm.
 
@@ -22,9 +21,9 @@ DreamFS is designed for the modern, fragmented data landscape. It doesn't just i
 
 ## 🐧🍎🪟 Cross-Platform Integrity
 
-![Compatibility](assets/images/samesamebutdifferent.png)
+!["Same same, but different."](assets/images/dreamfs-platform-unity.png)
 
-"Same same, but different." Whether you're on Windows, macOS, or Linux, DreamFS abstracts away filesystem quirks to provide a consistent canonical view. It intelligently handles UNC paths, network mounts (NFS/CIFS), and case-sensitivity differences to ensure physical uniqueness is preserved across the wire.
+Whether you're on Windows, macOS, or Linux, DreamFS abstracts away filesystem quirks to provide a consistent canonical view. It intelligently handles UNC paths, network mounts (NFS/CIFS), and case-sensitivity differences to ensure physical uniqueness is preserved across the wire.
 
 ---
 
@@ -74,7 +73,7 @@ go build -o indexer cmd/indexer/main.go
 
 ## 🧠 Philosophy
 
-![Content over Path](assets/images/thisreallyisntracistitsaboutfreedom.png)
+!["And they will be judged, not by the cases of their strings, but by the content of their sectors"](assets/images/dreamfs-philosophy-content.png)
 
 DreamFS is built on the principle that metadata should be as portable as the ideas it represents. We prioritize **physical uniqueness** over path-based indexing, ensuring that your data remains yours, reachable and verifiable, no matter which platform it currently calls home.
 
