@@ -9,3 +9,18 @@ JIRA_ASSIGNEE = "support@gnomatix.com"
 
 [tools]
 go = "1.25.1"
+upx = "latest"
+
+[tasks.build]
+description = "Build the main application"
+run = "go run build/build.go"
+depends = ["clean"]
+
+[tasks.clean]
+description = "Cleanup the build dir"
+run = "rm -f build/dreamfs-*"
+
+[tasks.test]
+description = "Simple build test"
+run = "build/dreamfs-linux-amd64"
+depends = ["clean", "build"]

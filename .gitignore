@@ -22,4 +22,8 @@ dreamfs-*
 session_state
 .gemini
 indexer.db
+indexer
 .env
+go.work.sum
+# Added by goreleaser init:
+dist/
