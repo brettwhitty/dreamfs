@@ -1,6 +1,18 @@
 ---
-name: Gitea Repository Inspection
-description: Inspect repository details, existence, and mirrors using tea CLI.
+type: MANUAL
+authority: Brett Whitty
+review_status: APPROVED
+version: 0.1.1
+approved_versions: 0.1.*
+generated_on: 2026-01-22 17:15
+origin_persona: Brett Whitty
+origin_session: d346cd76-699f-4ab0-b24a-53180588cb07
+intent: Document repository inspection and metadata verification using the tea CLI.
+primary_sources: [docs/agent/skills/gitea_repo_inspection/SKILL.md]
+release_path: docs/agent/skills/gitea_repo_inspection/SKILL.md
+related_issues: []
+related_sops: []
+tags: [skill, gitea, inspection]
 ---
 
 # SKILL: Gitea Repository Inspection

@@ -1,5 +1,18 @@
 ---
-description: Formalizes the creation, maintenance, and promotion of project documentation using the "Wiki-First" approach.
+type: MANUAL
+authority: Brett Whitty
+review_status: APPROVED
+version: 0.1.1
+approved_versions: 0.1.*
+generated_on: 2026-01-22 17:15
+origin_persona: Brett Whitty
+origin_session: d346cd76-699f-4ab0-b24a-53180588cb07
+intent: Formalize the "Wiki-First" approach for project documentation.
+primary_sources: [docs/agent/workflows/documentation-lifecycle.md]
+release_path: docs/agent/workflows/documentation-lifecycle.md
+related_issues: []
+related_sops: []
+tags: [workflow, documentation, wiki-first]
 ---
 
 ### Phase 1: Instantiation (Wiki-First)
@@ -8,6 +21,10 @@ description: Formalizes the creation, maintenance, and promotion of project docu
    - `type`: `WORKING-DRAFT (LLM-GENERATED)` | `SOP` | `REPORT` | `MANUAL`
    - `authority`: `PENDING MANUAL REVIEW`
    - `review_status`: `PENDING`
+   - `version`: `0.1.1`
+   - `approved_versions`:
+     - `0.1.*` for `type: MANUAL` (Recognized as high-trust, human-authored content)
+     - `None` for `type: WORKING-DRAFT` (Requires vetting and promotion)
    - `generated_on`: Current timestamp
    - `origin_persona`: Current agent persona (e.g., `Rory Devlin (R&D Team Lead)`)
    - `origin_session`: Current conversation ID
@@ -27,6 +44,7 @@ description: Formalizes the creation, maintenance, and promotion of project docu
 1. **Approval**: Once the user provides final approval, update the metadata:
    - `review_status`: Set to `APPROVED`.
    - `authority`: Set to the approving user's name.
+   - `approved_versions`: Set to the current version pattern (e.g., `0.1.*`).
 2. **Movement**: Copy the file from the `wiki/` directory to its `release_path` in the main repository.
 3. **Commit**: 
    - Commit the deletion/status update in the Wiki repository.

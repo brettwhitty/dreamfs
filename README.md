@@ -1,3 +1,20 @@
+---
+type: MANUAL
+authority: Brett Whitty
+review_status: APPROVED
+version: 0.1.1
+approved_versions: 0.1.*
+generated_on: 2026-01-22 17:03
+origin_persona: Brett Whitty
+origin_session: d346cd76-699f-4ab0-b24a-53180588cb07
+intent: Define the core identity, vision, and technical pillars of the DreamFS project.
+primary_sources: [README.md]
+release_path: README.md
+related_issues: []
+related_sops: []
+tags: [readme, product, landing]
+---
+
 # DreamFS: Distributed Datastore for Extended File Attributes
 
 ![DreamFS Logo](assets/images/dreamfs-logo-vortex.png)

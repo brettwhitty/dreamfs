@@ -24,3 +24,5 @@ session_state
 indexer.db
 .env
 wiki/
+
+.gemini-cache/

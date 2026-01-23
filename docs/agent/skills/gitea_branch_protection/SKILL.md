@@ -1,6 +1,18 @@
 ---
-name: Gitea Branch Protection
-description: Manage branch protection rules (e.g., enable/disable Force Push) via tea CLI or Web UI.
+type: MANUAL
+authority: Brett Whitty
+review_status: APPROVED
+version: 0.1.1
+approved_versions: 0.1.*
+generated_on: 2026-01-22 17:15
+origin_persona: Brett Whitty
+origin_session: d346cd76-699f-4ab0-b24a-53180588cb07
+intent: Document Gitea branch protection management using the tea CLI.
+primary_sources: [docs/agent/skills/gitea_branch_protection/SKILL.md]
+release_path: docs/agent/skills/gitea_branch_protection/SKILL.md
+related_issues: []
+related_sops: []
+tags: [skill, gitea, branch-protection]
 ---
 
 # SKILL: Gitea Branch Protection
