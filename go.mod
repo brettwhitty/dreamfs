@@ -1,4 +1,4 @@
-module gnomatix/dreamfs/v2
+module gitea.gnomatix.com/gnomatix/dreamfs/v2
 
 go 1.25.1
 
