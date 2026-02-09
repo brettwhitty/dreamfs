@@ -6,7 +6,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/spf13/viper"
 
-	"gnomatix/dreamfs/v2/pkg/utils"
+	"gitea.gnomatix.com/gnomatix/dreamfs/v2/pkg/utils"
 )
 
 const (

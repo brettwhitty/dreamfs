@@ -13,11 +13,11 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"gnomatix/dreamfs/v2/pkg/storage"
-	"gnomatix/dreamfs/v2/pkg/network"
-	"gnomatix/dreamfs/v2/pkg/fileprocessor"
-	"gnomatix/dreamfs/v2/pkg/utils"
-	"gnomatix/dreamfs/v2/pkg/config"
+	"gitea.gnomatix.com/gnomatix/dreamfs/v2/pkg/storage"
+	"gitea.gnomatix.com/gnomatix/dreamfs/v2/pkg/network"
+	"gitea.gnomatix.com/gnomatix/dreamfs/v2/pkg/fileprocessor"
+	"gitea.gnomatix.com/gnomatix/dreamfs/v2/pkg/utils"
+	"gitea.gnomatix.com/gnomatix/dreamfs/v2/pkg/config"
 )
 
 // Global swarm delegate.

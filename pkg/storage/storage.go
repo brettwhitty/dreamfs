@@ -11,7 +11,7 @@ import (
 
 	bolt "go.etcd.io/bbolt"
 
-	"gnomatix/dreamfs/v2/pkg/metadata"
+	"gitea.gnomatix.com/gnomatix/dreamfs/v2/pkg/metadata"
 )
 
 // ------------------------

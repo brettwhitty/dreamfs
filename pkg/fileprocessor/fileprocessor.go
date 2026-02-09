@@ -21,10 +21,10 @@ import (
 	"github.com/spf13/viper"
 	"github.com/zeebo/blake3"
 
-	"gnomatix/dreamfs/v2/pkg/metadata"
-	"gnomatix/dreamfs/v2/pkg/network"
-	"gnomatix/dreamfs/v2/pkg/storage"
-	"gnomatix/dreamfs/v2/pkg/utils"
+	"gitea.gnomatix.com/gnomatix/dreamfs/v2/pkg/metadata"
+	"gitea.gnomatix.com/gnomatix/dreamfs/v2/pkg/network"
+	"gitea.gnomatix.com/gnomatix/dreamfs/v2/pkg/storage"
+	"gitea.gnomatix.com/gnomatix/dreamfs/v2/pkg/utils"
 )
 
 // ------------------------
