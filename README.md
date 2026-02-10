@@ -104,7 +104,8 @@ DreamFS is built on the principle that metadata should be as portable as the ide
 
 `DreamFS` is property of GNOMATIX. All rights reserved.
 
-![GNOMATIX](assets/images/gnomatix-new-xs.png "GNOMATIX")
+![GNOMATIX "TEAM"](assets/images/gnomatix-killbots-activate-xs.png)
+![GNOMATIX LOGO](assets/images/gnomatix-new-xs.png "GNOMATIX")
 
 ---
 
