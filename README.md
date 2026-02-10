@@ -19,7 +19,6 @@ tags: [readme, product, landing]
 
 ![DreamFS Logo](assets/images/dreamfs-logo-vortex.png)
 
-
 DreamFS is a lightweight, cross-platform, zero-config distributed datastore for extended file attributes. It provides a unified view of metadata across your entire digital swarm—from Linux servers and NAS devices to Windows desktops and beyond.
 
 ---
@@ -56,10 +55,12 @@ Whether you're on Windows, macOS, or Linux, DreamFS abstracts away filesystem qu
 ## 🚀 Getting Started
 
 ### Prerequisites
+
 - [Go](https://go.dev/dl/) 1.25.1+
 - [mise](https://mise.jdx.dev/) (recommended for environment management)
 
 ### Installation
+
 ```bash
 # Clone the repository
 git clone https://gitea.gnomatix.com/brett/dreamfs.git
@@ -72,16 +73,19 @@ go build -o indexer cmd/indexer/main.go
 ### Usage
 
 **Initialize an Index:**
+
 ```bash
 ./indexer index /path/to/your/data
 ```
 
 **Start a Swarm Node:**
+
 ```bash
 ./indexer serve --swarm --addr :8080
 ```
 
 **Monitor the Swarm:**
+
 ```bash
 ./indexer monitor --swarm
 ```
@@ -98,7 +102,9 @@ DreamFS is built on the principle that metadata should be as portable as the ide
 
 ## 📝 License
 
-DreamFS is property of GNOMATIX. All rights reserved.
+`DreamFS` is property of GNOMATIX. All rights reserved.
+
+![GNOMATIX](assets/images/gnomatix-new-xs.png "GNOMATIX")
 
 ---
 
