@@ -18,11 +18,15 @@ go.work
 dreamfs-*
 
 # Gemini CLI internal directory
+.gemini-cache/
 .gemini/tmp
 session_state
 .gemini
-indexer.db
-.env
-wiki/
 
-.gemini-cache/
+## Temp Devel Files
+wiki/
+mise/
+.mise.local.toml
+
+## Testing
+indexer.db
