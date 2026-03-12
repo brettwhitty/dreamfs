@@ -69,9 +69,9 @@ For new files, use 'wiki-sync add'.`,
 				}
 			}
 
-			if item.Status == "Changed" || item.Status == "Same" || item.Status == "Legacy" {
+			if item.Status == StatusModified || item.Status == StatusCurrent {
 				updates = append(updates, item)
-			} else if item.Status == "New" {
+			} else if item.Status == StatusUntracked {
 				if targetFile != "" {
 					fmt.Println(styleErr.Render(fmt.Sprintf("File '%s' does not exist in wiki. Use 'wiki-sync add' for new files.", item.RelPath)))
 				}
@@ -123,7 +123,7 @@ For new files, use 'wiki-sync add'.`,
 			}
 
 			// 2. Integrity Checks (State-based)
-			state, _ := LoadState()
+			state, _ := LoadState(cfg.RepoRoot)
 			var storedSum, storedRev string
 			if state != nil {
 				if fState, ok := state.Get(item.RelPath); ok {

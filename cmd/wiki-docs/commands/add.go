@@ -69,7 +69,7 @@ Enforces branch protection and manual review.`,
 				}
 			}
 
-			if item.Status == "New" {
+			if item.Status == StatusUntracked {
 				newFiles = append(newFiles, item)
 			} else if targetFile != "" {
 				fmt.Println(styleInfo.Render(fmt.Sprintf("File '%s' already exists in wiki (as %s). Use 'wiki-sync push' to update.", item.RelPath, item.WikiPath)))
@@ -130,7 +130,7 @@ Enforces branch protection and manual review.`,
 							items, _ = ScanAll(cfg)
 							for _, item := range items {
 								normTarget := filepath.ToSlash(targetFile)
-								if (item.RelPath == normTarget || strings.HasSuffix(item.RelPath, normTarget)) && item.Status == "New" {
+								if (item.RelPath == normTarget || strings.HasSuffix(item.RelPath, normTarget)) && item.Status == StatusUntracked {
 									newFiles = append(newFiles, item)
 								}
 							}

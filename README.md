@@ -100,6 +100,14 @@ DreamFS is built on the principle that metadata should be as portable as the ide
 
 ---
 
+## Meet the Hive
+
+| | | |
+|---|---|---|
+|  | [![DreamFS](assets/images/dreamfs-icon-s.png)](https://github.com/brettwhitty/dreamfs "DreamFS \(The \"Queen-to-Bee\"\)") |  |
+| [![xyzattr](assets/images/xyzattr-icon-s.png)](https://github.com/brettwhitty/xyzattr "xyzattr \(The \"Scribe\"\)") |  | [![meta-fuse](assets/images/meta-fuse-icon-s.png)](https://github.com/brettwhitty/meta-fuse "meta-fuse \(The \"Hacker Couch Potato\"\)") | 
+
+
 ## 📝 License
 
 `DreamFS` is property of GNOMATIX. All rights reserved.

@@ -51,7 +51,7 @@ var checkCmd = &cobra.Command{
 				label := fmt.Sprintf("%-10s %s", item.Status, item.RelPath)
 
 				// Version Check Highlight
-				if checkTargetVersion != "" && item.Status == "Synced" {
+				if checkTargetVersion != "" && item.Status == StatusCurrent {
 					// Check if version is present
 					var fmMap map[string]interface{}
 					if err := yaml.Unmarshal([]byte(item.LocalContent), &fmMap); err != nil {
@@ -119,7 +119,7 @@ func handleSelection(cfg Config, item FileItem) {
 	actions = append(actions, huh.NewOption("View Local Content", "view_local"))
 
 	switch item.Status {
-	case "New":
+	case StatusUntracked:
 		actions = append(actions, huh.NewOption("Add to Wiki", "add"))
 	case "Ahead":
 		actions = append(actions, huh.NewOption("Push to Wiki", "push"))
@@ -131,13 +131,13 @@ func handleSelection(cfg Config, item FileItem) {
 		actions = append(actions, huh.NewOption("View Diff", "diff"))
 		actions = append(actions, huh.NewOption("Force Pull (Overwrite Local)", "pull_force"))
 		actions = append(actions, huh.NewOption("Force Push (Overwrite Wiki)", "push_force"))
-	case "Synced":
+	case StatusCurrent:
 		actions = append(actions, huh.NewOption("View Wiki Content", "view_wiki"))
 		// Version Promote
 		if checkTargetVersion != "" {
 			actions = append(actions, huh.NewOption(fmt.Sprintf("Promote to v%s", checkTargetVersion), "promote"))
 		}
-	case "Runaway":
+	case StatusObsoleted:
 		actions = append(actions, huh.NewOption("Import to Docs", "pull"))
 	}
 

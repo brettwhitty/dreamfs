@@ -4,6 +4,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// listCmd represents the 'list' command which provides a TUI dashboard
+// for auditing staged documents against the Wiki source authority.
 var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List all tracked files and their sync status",

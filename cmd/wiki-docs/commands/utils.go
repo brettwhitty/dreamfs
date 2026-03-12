@@ -40,22 +40,45 @@ type Config struct {
 	WikiDir  string
 }
 
+// FileStatus defines the synchronization status of a file
+type FileStatus string
+
+const (
+	StatusCurrent   FileStatus = "Current"
+	StatusModified  FileStatus = "Modified"
+	StatusUntracked FileStatus = "Untracked"
+	StatusObsoleted FileStatus = "Obsoleted" // Replaces Orphan: Source no longer approved/present
+	StatusOutdated  FileStatus = "Outdated"  // Replaces Legacy: Staged Version < Approved Version
+	StatusIgnored   FileStatus = "Ignored"
+)
+
 // FileItem represents a file to be synced
+// FileItem represents a document in the staging pipeline.
+// It bridges the gap between the authoritative Wiki source and the local Repository staging.
 type FileItem struct {
-	WikiPath     string
-	LocalPath    string
-	RelPath      string
-	WikiContent  string
-	LocalContent string
-	Status       string                 // "New", "Changed", "Same", "Runaway"
-	ChangeType   string                 // "Content", "Meta", "Mixed", "New"
-	Version      string                 // Version from frontmatter
-	Approved     string                 // Approved versions from frontmatter
-	HasValidYAML bool                   // Whether the file has compliant YAML frontmatter
-	Meta         map[string]interface{} // Full parsed frontmatter
-	ExpectedMeta []string               // Attributes expected from template
-	MetaDiff     []string
-	Selected     bool
+	WikiPath     string // Absolute URL or path in Wiki repository
+	LocalPath    string // Absolute path in local repository
+	RelPath      string // Repository-relative path
+	WikiContent  string // Raw content from Wiki
+	LocalContent string // Raw content from Local Repository
+
+	// Status flags for the Auditor
+	Status     FileStatus // Current, Modified, Outdated, Obsoleted, etc.
+	ChangeType string     // Classification: Content, Meta, Mixed
+
+	// Metadata Shadow
+	Version      string                 // Extracted version identifier
+	Approved     string                 // Comma-separated approved versions
+	HasValidYAML bool                   // Correctness of frontmatter structure
+	Meta         map[string]interface{} // Full metadata map (Merged Shadow)
+
+	// TUI Presentation
+	Selected      bool
+	Readonly      bool                   // "readonly: true" in frontmatter
+	IsIgnored     bool                   // Matched by .gitignore or .geminiignore
+	TemplateAttrs map[string]interface{} // Attributes from the inherited template
+	InfoLayout    string                 // Custom display template from "## wiki-docs.display"
+	MetaDiff      []string               // List of modified metadata fields
 }
 
 // Styles
@@ -80,6 +103,22 @@ func getGitRemoteURL(dir string) (string, error) {
 
 func deriveWikiURLFromRemote(remote string) string {
 	return strings.TrimSuffix(remote, ".git")
+}
+
+// GetWikiURL determines the Wiki URL from Env or Git Remote
+func GetWikiURL(cfg Config) string {
+	// 1. Environment Variable
+	if url := os.Getenv("WIKI_URL"); url != "" {
+		return strings.TrimRight(url, "/")
+	}
+
+	// 2. Git Remote (Fallback)
+	remote, err := getGitRemoteURL(cfg.RepoRoot)
+	if err == nil && remote != "" {
+		return deriveWikiURLFromRemote(remote) + ".wiki"
+	}
+
+	return ""
 }
 
 func getConfig(cmd *cobra.Command) (Config, error) {
@@ -253,36 +292,40 @@ func getFileGitRevision(repoPath, relPath string) (string, error) {
 	return strings.TrimSpace(string(out)), nil
 }
 
-// ScanAll discovers all files in Sources and Wiki and determines their sync status.
+// ScanAll executes a comprehensive audit of the project workspace.
+// It iterates through configured source directories and cross-references them
+// with the Gitea Wiki, utilizing .config/wiki-docs/state.json for precise version attribution.
 func ScanAll(cfg Config) ([]FileItem, error) {
 	var items []FileItem
 
-	// 1. Get List of Tracked Wiki Files (Definitive state)
-	// We use 'git ls-files' to avoid being fooled by rebase artifacts or untracked debris.
-	cmdWiki := exec.Command("git", "-C", cfg.WikiDir, "ls-files")
-	outWiki, _ := cmdWiki.Output()
-	wikiFiles := strings.Split(strings.TrimSpace(string(outWiki)), "\n")
-
-	wikiMap := make(map[string]string) // Normalized Wiki Name -> Actual Wiki Path
-	for _, wf := range wikiFiles {
-		if wf == "" || filepath.Ext(wf) != ".md" {
-			continue
+	// 1. Build Wiki Map: flattened filename -> actual relative filename (Definitive state)
+	// We walk the wiki directory to discover all staged candidates, excluding internal metadata.
+	wikiMap := make(map[string]string)
+	filepath.Walk(cfg.WikiDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return nil
 		}
-		// STRICT: Gitea Wikis are flat. Only files in the root of the wiki repo count.
-		if strings.Contains(wf, "/") || strings.Contains(wf, "\\") {
-			continue
+		if info.IsDir() {
+			name := info.Name()
+			if name == ".git" || name == ".config" {
+				return filepath.SkipDir
+			}
+			return nil
 		}
-
-		// Only consider files that follow our naming conventions (to avoid repo debris)
-		if !strings.HasPrefix(wf, WikiPrefixBase) && !strings.HasPrefix(wf, LegacyWikiPrefixBase) && !strings.HasPrefix(wf, TemplatePrefixBase) {
-			continue
+		rel, _ := filepath.Rel(cfg.WikiDir, path)
+		// Flat structure enforcement: Only files in the wiki root are candidates.
+		if !strings.Contains(rel, "/") && !strings.Contains(rel, "\\") {
+			wikiMap[rel] = rel
 		}
+		return nil
+	})
 
-		wikiMap[wf] = wf
-	}
+	// Pre-load the staging metadata for the entire scan (Performance Optimization)
+	state, _ := LoadState(cfg.RepoRoot)
 
-	// 2. Discover Local Files (Respecting .gitignore)
-	localFiles := make(map[string]string) // RelPath -> WikiName
+	// Keep track of which local files map to which wiki entries for the "Runaway" check.
+	localFiles := make(map[string]string)
+
 	for _, source := range cfg.Sources {
 		absSourceDir := filepath.Join(cfg.RepoRoot, source)
 		if _, err := os.Stat(absSourceDir); os.IsNotExist(err) {
@@ -291,12 +334,19 @@ func ScanAll(cfg Config) ([]FileItem, error) {
 
 		err := filepath.Walk(absSourceDir, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
-				return err
-			}
-			if info.IsDir() {
-				// Don't skip dirs yet, check-ignore handles it
 				return nil
 			}
+
+			// Repository Skip Logic: Exclude build artifacts and private directories
+			if info.IsDir() {
+				name := info.Name()
+				if name == ".git" || name == ".config" || name == "node_modules" || name == "vendor" {
+					return filepath.SkipDir
+				}
+				return nil
+			}
+
+			// Auditor Focus: Only markdown documents are considered for staging
 			if filepath.Ext(path) != ".md" {
 				return nil
 			}
@@ -304,14 +354,15 @@ func ScanAll(cfg Config) ([]FileItem, error) {
 			relPathRaw, _ := filepath.Rel(cfg.RepoRoot, path)
 			relPath := filepath.ToSlash(relPathRaw)
 
-			// Check if ignored by git
+			// Git Integrity: Check if the file is ignored by repository-level configuration.
+			// Ignored files are tracked but flagged for the TUI observer.
 			cmdIgnore := exec.Command("git", "check-ignore", "-q", relPath)
+			isIgnored := false
 			if err := cmdIgnore.Run(); err == nil {
-				// Exit code 0 means it IS ignored
-				return nil
+				isIgnored = true
 			}
 
-			// Check if ignored by .geminiignore
+			// Check if ignored by .geminiignore (Tool-specific ignore)
 			if isGeminiIgnored(cfg.RepoRoot, relPath) {
 				return nil
 			}
@@ -324,72 +375,158 @@ func ScanAll(cfg Config) ([]FileItem, error) {
 			localContentBytes, _ := os.ReadFile(path)
 			localContent := string(localContentBytes)
 
-			status := "New"
+			var status FileStatus = StatusUntracked
 			wikiContent := ""
 			finalWikiPath := wikiName
 
 			// 3. Matching logic (Wiki-First priority)
 			// Combinations to check (in order of preference):
 			// A. Primary: src-docs~ (with underscores)
-			// B. Legacy:  repo-root~ (with underscores)
-			// C. Legacy-Hyphen: src-docs~ (with hyphens)
+			// B. Legacy Prfix:  repo-root~ (with underscores)
+			// C. Primary-Hyphen: src-docs~ (with hyphens)
 			// D. Legacy-Hyphen: repo-root~ (with hyphens)
 
-			status = "Untracked" // Default: Local-only, not yet in wiki
+			status = StatusUntracked // Default: Local-only, not yet in wiki
 			wikiContent = ""
 			finalWikiPath = ""
 			found := false
 			actualWikiFile := ""
 
+			// Resolve Wiki Filename: Matches Wiki naming conventions
 			// A. Check Primary Match (src-docs~ + underscores)
 			if wf, ok := wikiMap[wikiName]; ok {
 				actualWikiFile = wf
-				status = "Synced"
+				status = StatusCurrent // Assume Current; verified later by hash/rev
 				found = true
 			} else {
 				// B. Check Legacy (repo-root~ + underscores)
+				// Documents staged using the older repo-root~ naming convention
 				legacyName := ToWikiPath(relPath, LegacyWikiPrefixBase)
 				if wf, ok := wikiMap[legacyName]; ok {
 					actualWikiFile = wf
-					status = "Legacy"
+					status = StatusOutdated // Path-based deprecation is inherently Outdated
 					found = true
 				} else {
 					// C. Check Legacy-Hyphen (src-docs~ + hyphens)
+					// Handle documents using older hyphenated separators for path flattening
 					hyphenatedPrimary := WikiPrefixBase + strings.ReplaceAll(strings.TrimSuffix(relPath, ".md"), "/", "~") + ".md"
 					if wf, ok := wikiMap[hyphenatedPrimary]; ok {
 						actualWikiFile = wf
-						status = "Legacy"
+						status = StatusOutdated
 						found = true
 					} else {
 						// D. Check Legacy-Hyphen (repo-root~ + hyphens)
 						hyphenatedLegacy := LegacyWikiPrefixBase + strings.ReplaceAll(strings.TrimSuffix(relPath, ".md"), "/", "~") + ".md"
 						if wf, ok := wikiMap[hyphenatedLegacy]; ok {
 							actualWikiFile = wf
-							status = "Legacy"
+							status = StatusOutdated
 							found = true
 						}
 					}
 				}
 			}
 
-			if found {
-				finalWikiPath = actualWikiFile
-				wikiPath := filepath.Join(cfg.WikiDir, actualWikiFile)
-				bytesWiki, _ := os.ReadFile(wikiPath)
-				wikiContent = string(bytesWiki)
-
-				if CalculateChecksum(localContent) != CalculateChecksum(wikiContent) {
-					status = "Changed"
-				} else if status == "Synced" {
-					status = "Same"
+			// 4. State & Integrity Check: Cross-reference local state with live Wiki
+			stagedRev := ""
+			stagedChecksum := ""
+			if state != nil {
+				if fs, ok := state.Get(relPath); ok {
+					stagedRev = fs.LastRev
+					stagedChecksum = fs.LastChecksum
 				}
 			}
 
-			// Extract version info from frontmatter
+			if found {
+				finalWikiPath = actualWikiFile
+				wikiFileAbsPath := filepath.Join(cfg.WikiDir, actualWikiFile)
+				bytesWiki, _ := os.ReadFile(wikiFileAbsPath)
+				wikiContent = string(bytesWiki)
+
+				// BODY-ONLY HASH CHECK:
+				// Extract the markdown body and discard YAML frontmatter to avoid
+				// false-positives caused by staging-time metadata stripping.
+				localBody := stripFrontmatter(localContent)
+				wikiBody := stripFrontmatter(wikiContent)
+
+				localChecksum := CalculateChecksum(localBody)
+				wikiChecksum := CalculateChecksum(wikiBody)
+
+				currentWikiRev, _ := getFileGitRevision(cfg.WikiDir, actualWikiFile)
+
+				// Status Attribution Hierarchy:
+				// Determines if the staged file is Current, Outdated (Wiki changed),
+				// or Modified (Local changed).
+				if localChecksum == wikiChecksum {
+					// Local content matches live Wiki body perfectly.
+					if stagedRev != "" && stagedRev != currentWikiRev {
+						// Content matches but we are tracking a stale revision.
+						status = StatusOutdated
+					} else if status == StatusCurrent {
+						status = StatusCurrent
+					}
+				} else if stagedChecksum != "" && localChecksum == stagedChecksum {
+					// Local matches documented 'staged checksum' but differs from current Wiki.
+					// This indicates the Wiki source has updated since the last pull.
+					status = StatusOutdated
+				} else if stagedChecksum != "" {
+					// Local body differs from both current Wiki AND the documented staged hash.
+					// This indicates local repository-level modifications.
+					status = StatusModified
+				} else {
+					// No history, but it differs from current Wiki.
+					status = StatusModified
+				}
+			}
+
+			// Parse local metadata for auditing and TUI presentation.
 			fm, hasValidYAML := parseFrontmatter(localContent)
-			version, _ := fm["version"].(string)
+
+			// Metadata Inheritance:
+			// Populate the display map with Wiki metadata markers for transparency.
+			// Values not present in local YAML are labels as "(inherited)" to signify source authority.
+			displayFM := make(map[string]interface{})
+			if wikiContent != "" {
+				wfm, _ := parseFrontmatter(wikiContent)
+				for k, v := range wfm {
+					// Label as inherited if it's not in our local frontmatter
+					if _, exists := fm[k]; !exists {
+						displayFM[k] = fmt.Sprintf("%v (inherited)", v)
+					} else {
+						displayFM[k] = fm[k]
+					}
+				}
+				// Also include any local-only metadata if they exist
+				for k, v := range fm {
+					if _, exists := displayFM[k]; !exists {
+						displayFM[k] = v
+					}
+				}
+			} else {
+				displayFM = fm
+			}
+
+			// Check Readonly
+			readonly, _ := displayFM["readonly"].(bool)
+
+			// Get Template Attributes
+			tmplName, tmplContent := FindInheritedTemplate(relPath, cfg.WikiDir)
+			var tmplAttrs map[string]interface{}
+			var infoLayout string
+
+			if tmplName != "" {
+				tmplAttrs, _ = parseFrontmatter(tmplContent)
+				infoLayout = extractInfoLayout(tmplContent)
+			}
+
+			if isIgnored && status == StatusUntracked {
+				status = StatusIgnored
+			} else if isIgnored {
+				// It is ignored but also found in Wiki (Current/Modified/etc).
+				// We keep the sync status but mark IsIgnored = true
+			}
+			version, _ := displayFM["version"].(string)
 			approved := ""
-			if v, ok := fm["approved_versions"]; ok {
+			if v, ok := displayFM["approved_versions"]; ok {
 				switch t := v.(type) {
 				case string:
 					approved = t
@@ -403,16 +540,21 @@ func ScanAll(cfg Config) ([]FileItem, error) {
 			}
 
 			items = append(items, FileItem{
-				WikiPath:     finalWikiPath,
-				LocalPath:    path,
-				RelPath:      relPath,
-				WikiContent:  wikiContent,
-				LocalContent: localContent,
-				Status:       status,
-				ChangeType:   status,
-				Version:      version,
-				Approved:     approved,
-				HasValidYAML: hasValidYAML,
+				WikiPath:      finalWikiPath,
+				LocalPath:     path,
+				RelPath:       relPath,
+				WikiContent:   wikiContent,
+				LocalContent:  localContent,
+				Status:        status,
+				ChangeType:    string(status),
+				Version:       version,
+				Approved:      approved,
+				HasValidYAML:  hasValidYAML,
+				Meta:          displayFM,
+				Readonly:      readonly,
+				IsIgnored:     isIgnored,
+				TemplateAttrs: tmplAttrs,
+				InfoLayout:    infoLayout,
 			})
 			return nil
 		})
@@ -451,18 +593,55 @@ func ScanAll(cfg Config) ([]FileItem, error) {
 		}
 
 		if !matched {
-			// Runaway discovery
+			// Runaway discovery (Wiki files not in local repo)
 			wikiPath := filepath.Join(cfg.WikiDir, actual)
 			bytesWiki, _ := os.ReadFile(wikiPath)
 			items = append(items, FileItem{
 				WikiPath:    actual,
-				RelPath:     actual, // No easy local match
+				RelPath:     actual,
 				WikiContent: string(bytesWiki),
-				Status:      "Orphan",
-				ChangeType:  "Orphan",
+				Status:      StatusObsoleted,
+				ChangeType:  "Obsoleted",
 			})
 		}
 	}
 
 	return items, nil
+}
+
+// Helper: Extract info layout from "## wiki-docs.display" block
+func extractInfoLayout(content string) string {
+	// 1. Find the header
+	header := "## wiki-docs.display"
+	startIdx := strings.Index(content, header)
+	if startIdx == -1 {
+		return ""
+	}
+
+	// 2. Start after the header line
+	bodyStart := startIdx + len(header)
+
+	// Move past newline
+	rest := content[bodyStart:]
+	if idx := strings.Index(rest, "\n"); idx != -1 {
+		rest = rest[idx+1:]
+	} else {
+		return "" // Header at end of file, empty body
+	}
+
+	// 3. Find next header (## ) to stop, or EOF
+	// We want to stop at the next "## " that starts a line
+	// Simple approach: split by lines
+	lines := strings.Split(rest, "\n")
+	var layoutLines []string
+
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmed, "## ") {
+			break // Found next section
+		}
+		layoutLines = append(layoutLines, line)
+	}
+
+	return strings.TrimSpace(strings.Join(layoutLines, "\n"))
 }

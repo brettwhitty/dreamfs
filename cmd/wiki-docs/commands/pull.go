@@ -16,15 +16,24 @@ import (
 )
 
 var (
-	pullForce     bool
-	pullCheck     bool
-	pullDryRun    bool
-	pullURL       string
+	// pullForce bypasses interactive confirmation for changed files.
+	pullForce bool
+	// pullCheck enables version verification against Wiki approved versions.
+	pullCheck bool
+	// pullDryRun simulates the pull without writing to the repository.
+	pullDryRun bool
+	// pullURL specifies the remote Wiki URL for HTTP fetching.
+	pullURL string
+	// targetVersion filters Wiki documents by approved version.
 	targetVersion string
-	keepAttrs     []string
-	docStyle      = lipgloss.NewStyle().Margin(1, 2)
+	// keepAttrs defines metadata keys to preserve during staging.
+	keepAttrs []string
+
+	// docStyle provides layout for CLI output components.
+	docStyle = lipgloss.NewStyle().Margin(1, 2)
 )
 
+// pullCmd represents the 'pull' command which stages documents from the Wiki to the local Repo.
 var pullCmd = &cobra.Command{
 	Use:   "pull",
 	Short: "Sync wiki to local docs (Wiki -> Repo)",
@@ -113,7 +122,7 @@ Supports local wiki clone (default) or HTTP fetching via --url or auto-detected 
 				}
 			}
 
-			if item.Status != "Same" {
+			if item.Status != StatusCurrent {
 				changedItems = append(changedItems, item)
 			}
 		}
@@ -143,7 +152,7 @@ Supports local wiki clone (default) or HTTP fetching via --url or auto-detected 
 				icon := " "
 
 				switch item.ChangeType {
-				case "New":
+				case "Orphan":
 					st = styleNew
 					icon = "+"
 				case "Content":
@@ -216,19 +225,20 @@ Supports local wiki clone (default) or HTTP fetching via --url or auto-detected 
 						newFM["effectiveDate"] = time.Now().Format("2006-01-02")
 					}
 
-					// Update State (Sync Metadata)
+					// Update State (Sync Metadata) for persistence in the repo-relative state file.
 					// We calculate checksum of the CLEAN body we are about to save.
 					checksum := CalculateChecksum(cleanBody)
 
-					// Load State (SAFE: loading inside loop for now to ensure correctness)
-					state, _ := LoadState()
+					// Load and update the persistent sync state.
+					state, _ := LoadState(cfg.RepoRoot)
 					if state != nil && cfg.WikiDir != "" {
 						// Try to get SHA from local Wiki Repo
-						sha, _ := getFileGitRevision(cfg.WikiDir, item.WikiPath)
+						wikiFilename := filepath.Base(item.WikiPath)
+						sha, _ := getFileGitRevision(cfg.WikiDir, wikiFilename)
 						if sha != "" {
 							state.Update(item.RelPath, sha, checksum)
-							if err := state.Save(); err != nil {
-								// Log error but don't stop sync?
+							if err := state.Save(cfg.RepoRoot); err != nil {
+								// Log error but don't stop sync.
 								fmt.Printf("Warning: Failed to save state: %v\n", err)
 							}
 						}
@@ -335,14 +345,14 @@ func discoverFilesLocal(cfg Config) ([]FileItem, error) {
 			continue
 		}
 
-		status := "Same"
+		var status FileStatus = StatusCurrent
 		changeType := ""
 		localContent := ""
 		var metaDiff []string
 
 		if info, err := os.Stat(localPath); os.IsNotExist(err) {
-			status = "New"
-			changeType = "New"
+			status = StatusObsoleted
+			changeType = "Orphan"
 		} else if !info.IsDir() {
 			bytesLocal, _ := os.ReadFile(localPath)
 			localContent = string(bytesLocal)
@@ -373,13 +383,13 @@ func discoverFilesLocal(cfg Config) ([]FileItem, error) {
 			}
 
 			if bodyChanged && metaChanged {
-				status = "Changed"
+				status = StatusModified
 				changeType = "Mixed"
 			} else if bodyChanged {
-				status = "Changed"
+				status = StatusModified
 				changeType = "Content"
 			} else if metaChanged {
-				status = "Changed"
+				status = StatusModified
 				changeType = "Meta"
 			}
 		}
@@ -444,47 +454,71 @@ func discoverFilesURL(cfg Config, baseURL string) ([]FileItem, error) {
 			bodyBytes, _ := io.ReadAll(resp.Body)
 			wikiContent := string(bodyBytes)
 
-			status := "Same"
+			var status FileStatus = StatusCurrent
 			changeType := ""
 
+			// Staging Integrity Assessment:
+			// We compare the stripped body hashes to identify actual content changes,
+			// ignoring staging-time metadata differences.
 			cleanWiki := stripFrontmatter(wikiContent)
 			cleanLocal := stripFrontmatter(localContent)
 
-			bodyChanged := cleanWiki != cleanLocal
+			bodyChecksum := CalculateChecksum(cleanLocal)
+			wikiChecksum := CalculateChecksum(cleanWiki)
+
+			// Load repo-relative state for precise delta identification.
+			state, _ := LoadState(cfg.RepoRoot)
+			stagedChecksum := ""
+			if state != nil {
+				if fs, ok := state.Get(relPath); ok {
+					stagedChecksum = fs.LastChecksum
+				}
+			}
+
+			// Staging Status Determination Logic (Aligned with ScanAll)
+			bodyChanged := bodyChecksum != wikiChecksum
+			if !bodyChanged {
+				status = StatusCurrent
+			} else if stagedChecksum != "" && bodyChecksum == stagedChecksum {
+				// Local matches staged, wiki has updated.
+				status = StatusOutdated
+				changeType = "Wiki Update"
+			} else {
+				// Local has changed since staging.
+				status = StatusModified
+				changeType = "Local Edit"
+			}
 
 			localFM, _ := parseFrontmatter(localContent)
 			wikiFM, _ := parseFrontmatter(wikiContent)
 
-			expectedFM := make(map[string]interface{})
+			metaChanged := false
+			var metaDiff []string
+
+			// Check for metadata drifts based on whitelisted attributes.
 			if len(keepAttrs) > 0 {
+				expectedFM := make(map[string]interface{})
 				for _, key := range keepAttrs {
 					if val, ok := wikiFM[key]; ok {
 						expectedFM[key] = val
 					}
 				}
-				expectedFM["effectiveDate"] = time.Now().Format("2006-01-02")
-			}
-
-			metaChanged := false
-			var metaDiff []string
-
-			for k, v := range expectedFM {
-				localV, ok := localFM[k]
-				if !ok || fmt.Sprintf("%v", v) != fmt.Sprintf("%v", localV) {
-					metaChanged = true
-					metaDiff = append(metaDiff, k)
+				for k, v := range expectedFM {
+					localV, ok := localFM[k]
+					if !ok || fmt.Sprintf("%v", v) != fmt.Sprintf("%v", localV) {
+						metaChanged = true
+						metaDiff = append(metaDiff, k)
+					}
 				}
 			}
 
-			if bodyChanged && metaChanged {
-				status = "Changed"
-				changeType = "Mixed"
-			} else if bodyChanged {
-				status = "Changed"
-				changeType = "Content"
-			} else if metaChanged {
-				status = "Changed"
-				changeType = "Meta"
+			if metaChanged {
+				if status == StatusCurrent {
+					status = StatusModified
+					changeType = "Metadata Only"
+				} else {
+					changeType = "Mixed (" + changeType + ")"
+				}
 			}
 
 			items = append(items, FileItem{

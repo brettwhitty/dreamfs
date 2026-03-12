@@ -14,27 +14,34 @@ type FileState struct {
 	LastSyncedAt time.Time `json:"last_synced_at"`
 }
 
+// SyncState manages the local persistence of document staging metadata.
+// It tracks revisions and body checksums to allow precise auditing of
+// staged documents even when their YAML frontmatter is stripped.
 type SyncState struct {
 	Files map[string]FileState `json:"files"`
 	mu    sync.RWMutex
 }
 
+// NewSyncState initializes a fresh staging metadata state.
 func NewSyncState() *SyncState {
 	return &SyncState{
 		Files: make(map[string]FileState),
 	}
 }
 
-func GetStatePath() (string, error) {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return "", err
+// GetStatePath returns the absolute path to the staging metadata file,
+// ensuring it is stored within the .config directory of the provided repo root.
+func GetStatePath(repoRoot string) (string, error) {
+	if repoRoot == "" {
+		return "", filepath.ErrBadPattern
 	}
-	return filepath.Join(home, ".config", "wiki-sync", "state.json"), nil
+	return filepath.Join(repoRoot, ".config", "wiki-docs", "state.json"), nil
 }
 
-func LoadState() (*SyncState, error) {
-	path, err := GetStatePath()
+// LoadState retrieves the staging metadata from the repository's .config directory.
+// It returns an initialized state even if the file does not yet exist.
+func LoadState(repoRoot string) (*SyncState, error) {
+	path, err := GetStatePath(repoRoot)
 	if err != nil {
 		return nil, err
 	}
@@ -57,11 +64,12 @@ func LoadState() (*SyncState, error) {
 	return &state, nil
 }
 
-func (s *SyncState) Save() error {
+// Save persists the current sync state to the repository's .config directory.
+func (s *SyncState) Save(repoRoot string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	path, err := GetStatePath()
+	path, err := GetStatePath(repoRoot)
 	if err != nil {
 		return err
 	}
@@ -79,6 +87,7 @@ func (s *SyncState) Save() error {
 	return os.WriteFile(path, data, 0644)
 }
 
+// Get retrieves the recorded file state for a repository-relative path.
 func (s *SyncState) Get(relPath string) (FileState, bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -86,6 +95,7 @@ func (s *SyncState) Get(relPath string) (FileState, bool) {
 	return val, ok
 }
 
+// Update records the sync metadata for a repository-relative path.
 func (s *SyncState) Update(relPath, rev, checksum string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
