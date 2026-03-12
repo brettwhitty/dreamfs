@@ -1,0 +1,6 @@
+┌────────────────────┬────────────────────────────┬────────────────────┬────────────┬─────────┐
+│        NAME        │            URL             │      SSH HOST      │    USER    │ DEFAULT │
+├────────────────────┼────────────────────────────┼────────────────────┼────────────┼─────────┤
+│ gemini-cli         │ https://gitea.gnomatix.com │ gitea.gnomatix.com │ gemini-cli │ true    │
+│ brett@gnomatix.com │ https://gitea.gnomatix.com │ gitea.gnomatix.com │ brett      │ false   │
+└────────────────────┴────────────────────────────┴────────────────────┴────────────┴─────────┘

@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DreamFS Console</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+  <style>
+    :root {
+      --bg: #0d1117; --surface: #161b22; --border: #30363d;
+      --text: #c9d1d9; --muted: #8b949e; --accent: #58a6ff;
+      --green: #3fb950; --orange: #e3b341; --red: #f85149;
+      --purple: #bc8cff;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; display: flex; min-height: 100vh; }
+    nav { width: 200px; background: var(--surface); border-right: 1px solid var(--border); padding: 24px 0; flex-shrink: 0; display: flex; flex-direction: column; }
+    nav h1 { font-size: 1rem; font-weight: 700; color: var(--accent); padding: 0 20px 20px; letter-spacing: .05em; }
+    nav a { display: block; padding: 9px 20px; color: var(--muted); text-decoration: none; font-size: 0.85rem; border-left: 3px solid transparent; transition: all .15s; cursor: pointer; }
+    nav a:hover, nav a.active { color: var(--text); border-color: var(--accent); background: rgba(88,166,255,.07); }
+    main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    .page { display: none; flex: 1; overflow: hidden; }
+    .page.active { display: flex; flex-direction: column; }
+
+    /* Topology page */
+    #page-topology { position: relative; }
+    #topology-svg { flex: 1; width: 100%; }
+    #topo-overlay { position: absolute; top: 16px; right: 16px; width: 280px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px; display: none; }
+    #topo-overlay h3 { font-size: 0.85rem; color: var(--accent); margin-bottom: 10px; }
+    #topo-overlay .field { margin-bottom: 8px; }
+    #topo-overlay label { display: block; font-size: 0.75rem; color: var(--muted); margin-bottom: 3px; }
+    #topo-overlay input { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; color: var(--text); padding: 5px 8px; font-size: 0.82rem; }
+    #topo-overlay button { background: var(--accent); color: #0d1117; border: none; padding: 6px 14px; border-radius: 5px; font-size: 0.8rem; font-weight: 600; cursor: pointer; margin-top: 6px; }
+    #topo-overlay .close { float: right; background: none; border: none; color: var(--muted); font-size: 1rem; cursor: pointer; padding: 0; margin: 0; }
+
+    /* Stat cards */
+    #page-dashboard { overflow-y: auto; padding: 28px; }
+    #page-dashboard h2 { font-size: 1.15rem; margin-bottom: 16px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 14px; margin-bottom: 22px; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
+    .card h3 { font-size: 0.75rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 6px; }
+    .card .val { font-size: 1.4rem; font-weight: 600; }
+
+    /* Indexer panel */
+    #page-indexer { overflow-y: auto; padding: 28px; }
+    #page-indexer h2 { font-size: 1.15rem; margin-bottom: 16px; }
+    .progress-bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin-top: 8px; }
+    .progress-fill { height: 100%; background: var(--accent); border-radius: 3px; transition: width .4s; }
+    .badge { display:inline-block;padding:2px 8px;border-radius:12px;font-size:0.75rem;font-weight:600; }
+    .badge.running { background:rgba(63,185,80,.15);color:var(--green); }
+    .badge.idle { background:rgba(139,148,158,.1);color:var(--muted); }
+    button.danger { background: var(--red); color: #fff; border: none; padding: 7px 14px; border-radius: 5px; font-size: 0.82rem; font-weight: 600; cursor: pointer; }
+
+    /* D3 node style */
+    .node-host circle { fill: #1f2937; stroke: var(--accent); stroke-width: 2; }
+    .node-volume circle { fill: #1a2035; stroke: var(--purple); stroke-width: 1.5; }
+    .node-dir circle { fill: #111827; stroke: var(--border); stroke-width: 1; }
+    .node-dir.active circle { stroke: var(--green); stroke-width: 2; animation: pulse 1.2s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+    .node text { fill: var(--text); font-size: 11px; pointer-events: none; }
+    .link { stroke: var(--border); stroke-opacity: .6; }
+    .link.active { stroke: var(--green); stroke-opacity: .9; stroke-width: 2; animation: dash 1s linear infinite; stroke-dasharray: 6 3; }
+    @keyframes dash { to { stroke-dashoffset: -18; } }
+    .worker-dot { fill: var(--orange); r: 4; }
+  </style>
+</head>
+<body>
+<nav>
+  <h1>⬡ DreamFS</h1>
+  <a class="active" data-page="topology">Topology</a>
+  <a data-page="dashboard">Dashboard</a>
+  <a data-page="indexer">Indexer</a>
+</nav>
+<main>
+
+  <!-- Topology -->
+  <div id="page-topology" class="page active">
+    <svg id="topology-svg"></svg>
+    <div id="topo-overlay">
+      <button class="close" onclick="closeOverlay()">✕</button>
+      <h3 id="overlay-title">Volume</h3>
+      <div class="field"><label>Volume ID</label><input id="ov-id" readonly></div>
+      <div class="field"><label>Label / Alias</label><input id="ov-label" placeholder="Friendly name…"></div>
+      <button onclick="saveLabel()">Save</button>
+      <div id="ov-dirs" style="margin-top:12px;font-size:0.8rem;color:var(--muted)"></div>
+    </div>
+  </div>
+
+  <!-- Dashboard -->
+  <div id="page-dashboard" class="page">
+    <h2>Dashboard</h2>
+    <div class="grid">
+      <div class="card"><h3>Host ID</h3><div class="val" style="font-size:.8rem;word-break:break-all" id="d-host">—</div></div>
+      <div class="card"><h3>Uptime</h3><div class="val" id="d-up">—</div></div>
+      <div class="card"><h3>Go</h3><div class="val" id="d-go">—</div></div>
+      <div class="card"><h3>CPUs</h3><div class="val" id="d-cpu">—</div></div>
+    </div>
+  </div>
+
+  <!-- Indexer -->
+  <div id="page-indexer" class="page">
+    <h2>Indexer</h2>
+    <div class="card" style="margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <h3 style="margin:0;font-size:0.8rem;text-transform:uppercase;color:var(--muted);letter-spacing:.06em">Status</h3>
+        <span class="badge idle" id="ix-badge">idle</span>
+      </div>
+      <div id="ix-dir" style="font-size:0.82rem;color:var(--muted);margin-bottom:8px"></div>
+      <div class="progress-bar"><div class="progress-fill" id="ix-bar" style="width:0%"></div></div>
+      <div style="font-size:0.78rem;color:var(--muted);margin-top:4px" id="ix-pct"></div>
+    </div>
+    <button class="danger" onclick="stopIndexer()">Stop Indexer</button>
+  </div>
+
+</main>
+
+<script>
+const BASE = '/api/v1';
+let labels = JSON.parse(localStorage.getItem('dreamfs-labels') || '{}');
+let overlayVolumeId = null;
+let topoTimer, refreshTimer;
+
+// ── Nav ──────────────────────────────────────────────────────────────────────
+document.querySelectorAll('nav a').forEach(a => {
+  a.addEventListener('click', () => activatePage(a.dataset.page));
+});
+function activatePage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.querySelector(`[data-page="${name}"]`).classList.add('active');
+  clearInterval(refreshTimer); clearInterval(topoTimer);
+  if (name === 'topology') { renderTopology(); topoTimer = setInterval(updateTopologyActive, 2000); }
+  if (name === 'dashboard') { loadDashboard(); refreshTimer = setInterval(loadDashboard, 5000); }
+  if (name === 'indexer')   { loadIndexer();   refreshTimer = setInterval(loadIndexer, 2000); }
+}
+
+async function apiFetch(path) {
+  const r = await fetch(BASE + path);
+  if (!r.ok) throw new Error(r.statusText);
+  return r.json();
+}
+
+// ── Dashboard ─────────────────────────────────────────────────────────────────
+async function loadDashboard() {
+  try {
+    const s = await apiFetch('/status');
+    document.getElementById('d-host').textContent = s.host_id || '—';
+    const up = Math.round(s.uptime_sec||0);
+    document.getElementById('d-up').textContent = `${Math.floor(up/3600)}h ${Math.floor(up%3600/60)}m`;
+    document.getElementById('d-go').textContent = s.go_version||'—';
+    document.getElementById('d-cpu').textContent = s.num_cpu||'—';
+  } catch(e) {}
+}
+
+// ── Indexer ───────────────────────────────────────────────────────────────────
+async function loadIndexer() {
+  try {
+    const ix = await apiFetch('/indexer/progress');
+    const b = document.getElementById('ix-badge');
+    b.textContent = ix.running ? 'running' : 'idle';
+    b.className = 'badge ' + (ix.running ? 'running' : 'idle');
+    document.getElementById('ix-dir').textContent = ix.current_dir||'';
+    const pct = ix.total > 0 ? Math.round(ix.processed/ix.total*100) : 0;
+    document.getElementById('ix-bar').style.width = pct + '%';
+    document.getElementById('ix-pct').textContent = ix.total > 0 ? `${ix.processed} / ${ix.total} (${pct}%)` : '';
+  } catch(e) {}
+}
+async function stopIndexer() {
+  try { await fetch(BASE+'/indexer/stop',{method:'POST'}); } catch(e){}
+}
+
+// ── Topology ──────────────────────────────────────────────────────────────────
+let topoNodes = [], topoLinks = [], simulation;
+
+async function renderTopology() {
+  const svg = d3.select('#topology-svg');
+  svg.selectAll('*').remove();
+  const W = svg.node().clientWidth || 900;
+  const H = svg.node().clientHeight || 600;
+
+  // Fetch data
+  let status = {host_id:'local', go_version:''};
+  let volumes = [];
+  let indexer = {running:false, current_dir:''};
+  try { status = await apiFetch('/status'); } catch(e){}
+  try { volumes = (await apiFetch('/volumes')).volumes||[]; } catch(e){}
+  try { indexer = await apiFetch('/indexer/progress'); } catch(e){}
+
+  // Build graph nodes & links
+  const nodes = [];
+  const links = [];
+  const hostNode = {id:'host', type:'host', label: status.host_id||'host', r:30};
+  nodes.push(hostNode);
+
+  volumes.forEach(vid => {
+    const label = labels[vid] || vid.substring(0,14)+'…';
+    const vn = {id:'vol:'+vid, type:'volume', label, volumeId:vid, r:20};
+    nodes.push(vn);
+    links.push({source:'host', target:'vol:'+vid, type:'vol'});
+  });
+
+  // If indexer is running, add current dir as an active node
+  if (indexer.running && indexer.current_dir) {
+    const dn = {id:'dir:active', type:'dir', label: indexer.current_dir.split(/[\\/]/).pop(), r:12, active:true};
+    nodes.push(dn);
+    // attach to any volume (best effort: first)
+    const anchor = volumes.length ? 'vol:'+volumes[0] : 'host';
+    links.push({source: anchor, target:'dir:active', type:'active'});
+  }
+
+  topoNodes = nodes; topoLinks = links;
+
+  const g = svg.append('g');
+
+  // Zoom
+  svg.call(d3.zoom().scaleExtent([0.3,3]).on('zoom', e => g.attr('transform', e.transform)));
+
+  // Simulation
+  simulation = d3.forceSimulation(nodes)
+    .force('link', d3.forceLink(links).id(d=>d.id).distance(d => d.type==='vol'?130:80))
+    .force('charge', d3.forceManyBody().strength(-400))
+    .force('center', d3.forceCenter(W/2, H/2))
+    .force('collision', d3.forceCollide().radius(d=>d.r+18));
+
+  const link = g.append('g').selectAll('line')
+    .data(links).join('line')
+    .attr('class', d => 'link' + (d.type==='active' ? ' active' : ''));
+
+  const node = g.append('g').selectAll('g')
+    .data(nodes).join('g')
+    .attr('class', d => `node-${d.type}` + (d.active ? ' active' : ''))
+    .call(d3.drag()
+      .on('start', (e,d) => { if(!e.active) simulation.alphaTarget(.3).restart(); d.fx=d.x; d.fy=d.y; })
+      .on('drag',  (e,d) => { d.fx=e.x; d.fy=e.y; })
+      .on('end',   (e,d) => { if(!e.active) simulation.alphaTarget(0); d.fx=null; d.fy=null; }))
+    .on('click', (e, d) => { if(d.type==='volume') openOverlay(d, indexer); });
+
+  node.append('circle').attr('r', d=>d.r);
+
+  // Worker "pulse" dots on active dir
+  nodes.filter(d=>d.active).forEach(dn => {
+    const workerG = g.append('g');
+    [0,.33,.66].forEach((phase, i) => {
+      workerG.append('circle')
+        .attr('class','worker-dot')
+        .attr('r', 4)
+        .each(function() { animateWorker(this, dn, phase); });
+    });
+  });
+
+  node.append('text')
+    .attr('dy', d => d.r + 14)
+    .attr('text-anchor','middle')
+    .text(d => d.label)
+    .style('font-size', d => d.type==='host' ? '12px' : '10px');
+
+  simulation.on('tick', () => {
+    link.attr('x1',d=>d.source.x).attr('y1',d=>d.source.y)
+        .attr('x2',d=>d.target.x).attr('y2',d=>d.target.y);
+    node.attr('transform',d=>`translate(${d.x},${d.y})`);
+  });
+}
+
+function animateWorker(el, targetNode, phase) {
+  function step() {
+    d3.select(el)
+      .attr('cx', targetNode.x||0)
+      .attr('cy', targetNode.y||0)
+      .transition().duration(800).ease(d3.easeLinear)
+      .attr('cx', (targetNode.x||0) + Math.cos(phase * Math.PI*2 + Date.now()/500)*20)
+      .attr('cy', (targetNode.y||0) + Math.sin(phase * Math.PI*2 + Date.now()/500)*20)
+      .on('end', step);
+  }
+  step();
+}
+
+async function updateTopologyActive() {
+  // Lightweight live update — just re-render if indexer state changes
+  try {
+    const ix = await apiFetch('/indexer/progress');
+    const hasActive = ix.running && ix.current_dir;
+    const existingActive = topoNodes.find(n=>n.id==='dir:active');
+    if (hasActive !== !!existingActive || (existingActive && existingActive.label !== ix.current_dir.split(/[\\/]/).pop())) {
+      renderTopology();
+    }
+  } catch(e) {}
+}
+
+// ── Overlay ────────────────────────────────────────────────────────────────────
+async function openOverlay(volNode, indexer) {
+  overlayVolumeId = volNode.volumeId;
+  document.getElementById('overlay-title').textContent = 'Volume';
+  document.getElementById('ov-id').value = volNode.volumeId;
+  document.getElementById('ov-label').value = labels[volNode.volumeId] || '';
+  const overlay = document.getElementById('topo-overlay');
+  overlay.style.display = 'block';
+
+  // Load files for this volume
+  try {
+    const data = await apiFetch('/volumes/' + encodeURIComponent(volNode.volumeId) + '/files');
+    const cnt = data.count || 0;
+    const dirsSet = new Set();
+    (data.files||[]).forEach(f => {
+      const parts = (f.FilePath||'').replace(/\\/g,'/').split('/');
+      if (parts.length > 1) dirsSet.add(parts.slice(0,-1).join('/'));
+    });
+    document.getElementById('ov-dirs').innerHTML =
+      `<b>${cnt}</b> file(s) indexed across <b>${dirsSet.size}</b> director${dirsSet.size===1?'y':'ies'}.` +
+      (dirsSet.size ? '<ul style="margin-top:6px;padding-left:14px;max-height:140px;overflow-y:auto">' +
+        [...dirsSet].slice(0,20).map(d=>`<li>${d}</li>`).join('') + '</ul>' : '');
+  } catch(e) { document.getElementById('ov-dirs').textContent = 'Could not load file list.'; }
+}
+
+function closeOverlay() { document.getElementById('topo-overlay').style.display='none'; overlayVolumeId=null; }
+
+function saveLabel() {
+  const lbl = document.getElementById('ov-label').value.trim();
+  if (overlayVolumeId) {
+    labels[overlayVolumeId] = lbl;
+    localStorage.setItem('dreamfs-labels', JSON.stringify(labels));
+    closeOverlay();
+    renderTopology();
+  }
+}
+
+// Init
+activatePage('topology');
+</script>
+</body>
+</html>

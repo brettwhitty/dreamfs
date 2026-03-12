@@ -19,6 +19,7 @@ import (
 
 	"gnomatix/dreamfs/v2/pkg/metadata"
 	"gnomatix/dreamfs/v2/pkg/storage"
+	"gnomatix/dreamfs/v2/pkg/utils"
 )
 
 // ------------------------
@@ -220,13 +221,14 @@ func GetPeerListFromHTTP(url string) ([]string, error) {
 }
 
 func StartSwarm(ps *storage.PersistentStore) (*memberlist.Memberlist, *SwarmDelegate, error) {
-	cfg := memberlist.DefaultLocalConfig() // Corrected typo
-	hostname, err := os.Hostname()
-	if err != nil {
+	cfg := memberlist.DefaultLocalConfig()
+	cfg.Name = utils.HostID
+	cfg.BindPort = viper.GetInt("swarmPort")
+
+	hostname, _ := os.Hostname()
+	if hostname == "" {
 		hostname = "node"
 	}
-	cfg.Name = fmt.Sprintf("%s-%d", hostname, time.Now().UnixNano())
-	cfg.BindPort = viper.GetInt("swarmPort")
 
 	ml, err := memberlist.Create(cfg)
 	if err != nil {
