@@ -216,7 +216,7 @@ For new files, use 'wiki-docs add'.`,
 }
 
 // discoverFilesPush is deprecated, use ScanAll
-func discoverFilesPush(cfg Config, target string) ([]FileItem, error) {
+func discoverFilesPush(cfg Config) ([]FileItem, error) {
 	return ScanAll(cfg)
 }
 

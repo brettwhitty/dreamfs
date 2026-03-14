@@ -99,7 +99,7 @@ var checkCmd = &cobra.Command{
 			}
 
 			// Action Menu for Selected File
-			handleSelection(cfg, *selected)
+			handleSelection(*selected)
 
 			// Re-Scan after action?
 			// Ideally yes, to update status.
@@ -111,7 +111,7 @@ var checkCmd = &cobra.Command{
 	},
 }
 
-func handleSelection(cfg Config, item FileItem) {
+func handleSelection(item FileItem) {
 	// Determine valid actions based on Status
 	var actions []huh.Option[string]
 
@@ -121,16 +121,6 @@ func handleSelection(cfg Config, item FileItem) {
 	switch item.Status {
 	case StatusUntracked:
 		actions = append(actions, huh.NewOption("Add to Wiki", "add"))
-	case "Ahead":
-		actions = append(actions, huh.NewOption("Push to Wiki", "push"))
-		actions = append(actions, huh.NewOption("View Diff", "diff"))
-	case "Behind":
-		actions = append(actions, huh.NewOption("Pull from Wiki", "pull"))
-		actions = append(actions, huh.NewOption("View Diff", "diff"))
-	case "Conflict":
-		actions = append(actions, huh.NewOption("View Diff", "diff"))
-		actions = append(actions, huh.NewOption("Force Pull (Overwrite Local)", "pull_force"))
-		actions = append(actions, huh.NewOption("Force Push (Overwrite Wiki)", "push_force"))
 	case StatusCurrent:
 		actions = append(actions, huh.NewOption("View Wiki Content", "view_wiki"))
 		// Version Promote
@@ -156,17 +146,9 @@ func handleSelection(cfg Config, item FileItem) {
 	case "view_local":
 		fmt.Println(lipgloss.NewStyle().Foreground(lipgloss.Color("250")).Render(item.LocalContent))
 		waitForKey()
-	case "diff":
-		// Show diff
-		fmt.Println("Diff not implemented yet in dashboard view.")
-		waitForKey()
 	case "add":
 		fmt.Println("Triggering Add...")
 		fmt.Printf("Run: wiki-docs add %s\n", item.LocalPath)
-		waitForKey()
-	case "push":
-		fmt.Println("Triggering Push...")
-		fmt.Printf("Run: wiki-docs push %s\n", item.LocalPath)
 		waitForKey()
 	case "pull":
 		fmt.Println("Triggering Pull...")
