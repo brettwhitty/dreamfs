@@ -72,7 +72,7 @@ Enforces branch protection and manual review.`,
 			if item.Status == StatusUntracked {
 				newFiles = append(newFiles, item)
 			} else if targetFile != "" {
-				fmt.Println(styleInfo.Render(fmt.Sprintf("File '%s' already exists in wiki (as %s). Use 'wiki-sync push' to update.", item.RelPath, item.WikiPath)))
+				fmt.Println(styleInfo.Render(fmt.Sprintf("File '%s' already exists in wiki (as %s). Use 'wiki-docs push' to update.", item.RelPath, item.WikiPath)))
 			}
 		}
 
@@ -165,7 +165,7 @@ Enforces branch protection and manual review.`,
 
 			// Double check existence (Race condition)
 			if _, err := os.Stat(filepath.Join(cfg.WikiDir, item.WikiPath)); err == nil {
-				fmt.Println(styleErr.Render("⛔ ERROR: File already exists in wiki! Use 'wiki-sync push'."))
+				fmt.Println(styleErr.Render("⛔ ERROR: File already exists in wiki! Use 'wiki-docs push'."))
 				continue
 			}
 

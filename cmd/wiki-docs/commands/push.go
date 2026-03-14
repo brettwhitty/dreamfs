@@ -16,7 +16,7 @@ var pushCmd = &cobra.Command{
 	Use:   "push [file]",
 	Short: "Update existing files in wiki",
 	Long: `Updates existing files in the wiki. Enforces branch protection and manual review.
-For new files, use 'wiki-sync add'.`,
+For new files, use 'wiki-docs add'.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// 1. Checks
 		if err := assertEditorSet(); err != nil {
@@ -73,7 +73,7 @@ For new files, use 'wiki-sync add'.`,
 				updates = append(updates, item)
 			} else if item.Status == StatusUntracked {
 				if targetFile != "" {
-					fmt.Println(styleErr.Render(fmt.Sprintf("File '%s' does not exist in wiki. Use 'wiki-sync add' for new files.", item.RelPath)))
+					fmt.Println(styleErr.Render(fmt.Sprintf("File '%s' does not exist in wiki. Use 'wiki-docs add' for new files.", item.RelPath)))
 				}
 			}
 		}
@@ -137,10 +137,10 @@ For new files, use 'wiki-sync add'.`,
 				calcSum := CalculateChecksum(localBody)
 
 				if storedSum != calcSum {
-					fmt.Println(styleErr.Render("⛔ INTEGRITY ERROR: Local file modified outside of wiki-sync workflow."))
+					fmt.Println(styleErr.Render("⛔ INTEGRITY ERROR: Local file modified outside of wiki-docs workflow."))
 					fmt.Printf("  Stored Checksum: %s\n", storedSum)
 					fmt.Printf("  Actual Checksum: %s\n", calcSum)
-					fmt.Println(styleInfo.Render("This file is protected. Please revert local changes and edit via wiki or use 'wiki-sync pull'."))
+					fmt.Println(styleInfo.Render("This file is protected. Please revert local changes and edit via wiki or use 'wiki-docs pull'."))
 					continue
 				} else {
 					fmt.Println(styleSuccess.Render("✓ Integrity verified"))
@@ -154,7 +154,7 @@ For new files, use 'wiki-sync add'.`,
 				fmt.Println(styleErr.Render("⛔ STOMP DETECTED: Wiki has changed since last pull."))
 				fmt.Printf("  Local Revision:  %s\n", localRev)
 				fmt.Printf("  Remote Revision: %s\n", remoteSHA)
-				fmt.Println(styleInfo.Render("Please 'wiki-sync pull' to merge changes before pushing."))
+				fmt.Println(styleInfo.Render("Please 'wiki-docs pull' to merge changes before pushing."))
 				continue
 			} else if remoteSHA != "" && localRev == "" {
 				fmt.Println(styleInfo.Render("⚠️  No local state found. Proceeding with caution."))

@@ -84,7 +84,7 @@ var checkCmd = &cobra.Command{
 			form := huh.NewForm(
 				huh.NewGroup(
 					huh.NewSelect[*FileItem]().
-						Title("Wiki-Sync Explorer").
+						Title("Wiki-Docs Explorer").
 						Description("Select a file to act on (Ctrl+C to exit)").
 						Options(options...).
 						Value(&selected).
@@ -162,15 +162,15 @@ func handleSelection(cfg Config, item FileItem) {
 		waitForKey()
 	case "add":
 		fmt.Println("Triggering Add...")
-		fmt.Printf("Run: wiki-sync add %s\n", item.LocalPath)
+		fmt.Printf("Run: wiki-docs add %s\n", item.LocalPath)
 		waitForKey()
 	case "push":
 		fmt.Println("Triggering Push...")
-		fmt.Printf("Run: wiki-sync push %s\n", item.LocalPath)
+		fmt.Printf("Run: wiki-docs push %s\n", item.LocalPath)
 		waitForKey()
 	case "pull":
 		fmt.Println("Triggering Pull...")
-		fmt.Printf("Run: wiki-sync pull %s\n", item.RelPath)
+		fmt.Printf("Run: wiki-docs pull %s\n", item.RelPath)
 		waitForKey()
 	case "promote":
 		promoted, err := addVersion(item.LocalContent, checkTargetVersion)

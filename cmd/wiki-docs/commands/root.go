@@ -14,9 +14,10 @@ var (
 	rootCmd = &cobra.Command{
 		Use:   "wiki-docs",
 		Short: "Manage documentation between local docs and Gitea Wiki",
-		Long: `wiki-docs manages the synchronization and organization of documentation.
-It supports pushing local 'docs/' to a Gitea Wiki repository
-and pulling changes back, with support for interactive selection.`,
+		Long: `wiki-docs is a document deployment tool for Gitea wikis.
+The wiki is the authority for document content and metadata.
+Pull stages approved/versioned docs from the wiki into the repo.
+Push feeds back local edits to the wiki for review.`,
 	}
 )
 
