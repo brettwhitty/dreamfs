@@ -69,7 +69,7 @@ var (
 
 // listModel represents the state of the interactive Wiki-Docs dashboard.
 // It manages the list viewport, the info (metadata) viewport, and handles
-// user interactions for filtering, navigation, and triggering sync actions.
+// user interactions for filtering, navigation, and triggering deployment actions.
 type listModel struct {
 	// Viewports and View State
 	viewport     viewport.Model
@@ -327,7 +327,7 @@ func (m *listModel) updateInfoContent() {
 				for k, v := range item.TemplateAttrs {
 					data[k] = v
 				}
-				// 2. Overwrite with explicit Local metadata (Authority)
+				// 2. Overwrite with explicit Local metadata (Staged)
 				for k, v := range item.Meta {
 					data[k] = v
 				}
@@ -345,19 +345,19 @@ func (m *listModel) updateInfoContent() {
 				}
 			}
 		} else {
-			// Sophisticated Metadata Dashboard (Wiki Authority Audit)
+			// Sophisticated Metadata Dashboard (Wiki Authority View)
 			var sb strings.Builder
 			sb.WriteString(fmt.Sprintf(" %s %s\n", lipgloss.NewStyle().Foreground(colorHeader).Bold(true).Render("WIKI SOURCE:"), item.WikiPath))
-			sb.WriteString(fmt.Sprintf(" %s %s\n", lipgloss.NewStyle().Foreground(colorHeader).Bold(true).Render("STAGED REPO:"), item.RelPath))
+			sb.WriteString(fmt.Sprintf(" %s %s\n", lipgloss.NewStyle().Foreground(colorHeader).Bold(true).Render("LOCAL STAGED:"), item.RelPath))
 			sb.WriteString("\n")
 
 			sb.WriteString(fmt.Sprintf(" %-20s %s\n",
-				lipgloss.NewStyle().Foreground(colorHeader).Render("SYNC STATUS:"),
+				lipgloss.NewStyle().Foreground(colorHeader).Render("DEPLOY STATUS:"),
 				item.Status))
 			sb.WriteString("\n")
 
 			// Table simulation for metadata (The "Source Status")
-			sb.WriteString(lipgloss.NewStyle().Foreground(colorHeader).Bold(true).Underline(true).Render(" SOURCE METADATA ") + "\n")
+			sb.WriteString(lipgloss.NewStyle().Foreground(colorHeader).Bold(true).Underline(true).Render(" WIKI METADATA ") + "\n")
 
 			keys := make([]string, 0, len(item.Meta))
 			for k := range item.Meta {

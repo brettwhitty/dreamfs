@@ -36,7 +36,7 @@ var (
 // pullCmd represents the 'pull' command which stages documents from the Wiki to the local Repo.
 var pullCmd = &cobra.Command{
 	Use:   "pull",
-	Short: "Sync wiki to local docs (Wiki -> Repo)",
+	Short: "Pull wiki content to local docs (Wiki -> Repo)",
 	Long: `Pulls changes from the wiki back to the local docs folder.
 Supports local wiki clone (default) or HTTP fetching via --url or auto-detected git remote.`,
 	Run: func(cmd *cobra.Command, args []string) {
@@ -225,11 +225,11 @@ Supports local wiki clone (default) or HTTP fetching via --url or auto-detected 
 						newFM["effectiveDate"] = time.Now().Format("2006-01-02")
 					}
 
-					// Update State (Sync Metadata) for persistence in the repo-relative state file.
+					// Update State (Deployment Metadata) for persistence in the repo-relative state file.
 					// We calculate checksum of the CLEAN body we are about to save.
 					checksum := CalculateChecksum(cleanBody)
 
-					// Load and update the persistent sync state.
+					// Load and update the persistent deployment state.
 					state, _ := LoadState(cfg.RepoRoot)
 					if state != nil && cfg.WikiDir != "" {
 						// Try to get SHA from local Wiki Repo
@@ -238,7 +238,7 @@ Supports local wiki clone (default) or HTTP fetching via --url or auto-detected 
 						if sha != "" {
 							state.Update(item.RelPath, sha, checksum)
 							if err := state.Save(cfg.RepoRoot); err != nil {
-								// Log error but don't stop sync.
+								// Log error but don't stop pull.
 								fmt.Printf("Warning: Failed to save state: %v\n", err)
 							}
 						}
@@ -554,7 +554,7 @@ func runInteractive(files []FileItem) []FileItem {
 	form := huh.NewForm(
 		huh.NewGroup(
 			huh.NewMultiSelect[string]().
-				Title("Select files to sync:").
+				Title("Select files to pull:").
 				Description("Press space to select/deselect, enter to confirm.").
 				Options(options...).
 				Value(&selectedPaths),

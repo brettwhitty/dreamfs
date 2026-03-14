@@ -21,7 +21,7 @@ var (
 var checkCmd = &cobra.Command{
 	Use:   "check",
 	Short: "Interactive Dashboard (Explorer)",
-	Long:  `Unified dashboard to explore sync status and trigger actions (Pull, Push, Diff, Add).`,
+	Long:  `Unified dashboard to explore document status and trigger actions (Pull, Push, Add).`,
 	Run: func(cmd *cobra.Command, args []string) {
 		cfg, err := getConfig(cmd)
 		if err != nil {
