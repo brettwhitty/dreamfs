@@ -17,6 +17,7 @@
 archive/** filter=git-crypt diff=git-crypt
 docs/gemini-instructions/** filter=git-crypt diff=git-crypt
 docs/gemini-local-tools/** filter=git-crypt diff=git-crypt
+.kiro/settings/** filter=git-crypt diff=git-crypt
 
 ## NOTES:
 ##
