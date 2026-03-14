@@ -226,15 +226,15 @@ func (m *listModel) renderRows() string {
 			rowStyle = rowStyle.Background(colorSelected).Foreground(colorText).Bold(true)
 		}
 
-		sStat := styleColStat.Copy().Inherit(rowStyle)
-		sYAML := styleColYAML.Copy().Inherit(rowStyle)
+		sStat := styleColStat.Inherit(rowStyle)
+		sYAML := styleColYAML.Inherit(rowStyle)
 		if !item.HasValidYAML && i != m.cursor {
 			sYAML = sYAML.Foreground(colorError)
 		}
 
-		sVer := styleColVer.Copy().Inherit(rowStyle)
+		sVer := styleColVer.Inherit(rowStyle)
 
-		sValid := styleColValid.Copy().Inherit(rowStyle)
+		sValid := styleColValid.Inherit(rowStyle)
 		if isComp && i != m.cursor {
 			sValid = sValid.Foreground(colorSuccess)
 		}
@@ -426,7 +426,7 @@ func (m *listModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		case "up", "k":
 			if m.activeView == 1 {
-				m.infoViewport.LineUp(1)
+				m.infoViewport.ScrollUp(1)
 				return m, nil
 			}
 			if m.cursor > 0 {
@@ -435,7 +435,7 @@ func (m *listModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case "down", "j":
 			if m.activeView == 1 {
-				m.infoViewport.LineDown(1)
+				m.infoViewport.ScrollDown(1)
 				return m, nil
 			}
 			if m.cursor < len(m.visibleItems)-1 {
@@ -460,7 +460,7 @@ func (m *listModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				m.updateViewports()
 			} else {
-				m.infoViewport.ViewUp()
+				m.infoViewport.HalfViewUp()
 			}
 		case "pgdown", "pagedown", "pgdn":
 			if m.activeView == 0 {
@@ -470,7 +470,7 @@ func (m *listModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				m.updateViewports()
 			} else {
-				m.infoViewport.ViewDown()
+				m.infoViewport.HalfViewDown()
 			}
 		case "1", "2", "3", "4", "5":
 			switch msg.String() {
@@ -527,7 +527,7 @@ func (m *listModel) View() string {
 	}
 	header := headerStyle.Width(m.terminalWidth).Render(" WIKI-DOCS DASHBOARD " + rv)
 
-	lStyle := baseStyle.Copy().Width(m.terminalWidth)
+	lStyle := baseStyle.Width(m.terminalWidth)
 	if m.activeView == 0 {
 		lStyle = lStyle.BorderForeground(colorSelected)
 	}
@@ -535,7 +535,7 @@ func (m *listModel) View() string {
 
 	infoView := ""
 	if m.infoVisible {
-		iStyle := paneStyle.Copy().Width(m.terminalWidth)
+		iStyle := paneStyle.Width(m.terminalWidth)
 		if m.activeView == 1 {
 			iStyle = iStyle.BorderForeground(colorSelected)
 		}

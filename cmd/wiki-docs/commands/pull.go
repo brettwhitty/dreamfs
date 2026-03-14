@@ -436,7 +436,8 @@ func discoverFilesURL(cfg Config, baseURL string) ([]FileItem, error) {
 			wikiFilename := WikiPrefixBase + flattened
 			url := baseURL + wikiFilename
 
-			resp, err := http.Get(url)
+			client := &http.Client{Timeout: 30 * time.Second}
+			resp, err := client.Get(url)
 			if err != nil {
 				return fmt.Errorf("http error: %w", err)
 			}

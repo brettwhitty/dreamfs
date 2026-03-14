@@ -269,7 +269,7 @@ func parseFrontmatter(content string) (map[string]interface{}, bool) {
 	parts := strings.SplitN(content, "---", 3)
 	if len(parts) == 3 {
 		if err := yaml.Unmarshal([]byte(parts[1]), &fm); err != nil {
-			return nil, false // Invalid YAML
+			return fm, false // Invalid YAML — return empty map, not nil
 		}
 		return fm, true // Valid YAML
 	}
@@ -303,6 +303,7 @@ func ScanAll(cfg Config) ([]FileItem, error) {
 	wikiMap := make(map[string]string)
 	filepath.Walk(cfg.WikiDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
+			fmt.Fprintf(os.Stderr, "Warning: wiki walk error: %v\n", err)
 			return nil
 		}
 		if info.IsDir() {
@@ -334,6 +335,7 @@ func ScanAll(cfg Config) ([]FileItem, error) {
 
 		err := filepath.Walk(absSourceDir, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
+				fmt.Fprintf(os.Stderr, "Warning: source walk error: %v\n", err)
 				return nil
 			}
 
