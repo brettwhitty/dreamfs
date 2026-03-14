@@ -23,6 +23,9 @@ dreamfs-*
 session_state
 .gemini
 
+# Kiro IDE internal directory
+.kiro/
+
 ## Temp Devel Files
 wiki/
 mise/
