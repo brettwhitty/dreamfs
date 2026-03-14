@@ -279,12 +279,10 @@ func init() {
 
 	// Support comma-separated env var for default
 	defaultKeep := []string{
-		// GitHub Standard
-		"title", "shortTitle", "intro", "versions", "redirect_from", "permissions", "product", "layout",
-		"children", "childGroups", "featuredLinks", "showMiniToc", "changelog", "learningTracks", "type", "topics",
-		"effectiveDate", "communityRedirect",
-		// Internal
-		"release_path", "approved_versions", "review_status", "authority", "generated_on", "origin_persona", "origin_session", "intent",
+		// Org documentation-lifecycle schema
+		"title", "description", "type", "authority", "version", "approved_versions",
+		"review_status", "generated_on", "origin_persona", "origin_session",
+		"intent", "release_path", "related_issues", "related_sops", "tags",
 		// Integrity
 		"readonly",
 	}
