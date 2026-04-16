@@ -37,3 +37,10 @@ indexer.db
 
 ## Stale artifacts
 logins.txt
+
+## Build artifacts
+indexer
+.env
+go.work.sum
+# Added by goreleaser init:
+dist/

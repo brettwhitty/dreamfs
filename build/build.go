@@ -41,12 +41,12 @@ func main() {
 	for _, t := range targets {
 		fmt.Printf("Building for %s/%s...\n", t.OS, t.Arch)
 		ldflags := fmt.Sprintf("-X main.version=%s -X main.commit=%s -X 'main.date=%s'", version, commit, date)
-		outputName := fmt.Sprintf("dreamfs-%s-%s", t.OS, t.Arch)
+		outputName := fmt.Sprintf("./build/dreamfs-%s-%s", t.OS, t.Arch)
 		if t.OS == "windows" {
 			outputName += ".exe"
 		}
 
-		cmd := exec.Command("go", "build", "-ldflags="+ldflags, "-o", outputName, ".")
+		cmd := exec.Command("go", "build", "-ldflags="+ldflags, "-o", outputName, "./cmd/indexer")
 		cmd.Env = append(os.Environ(), "GOOS="+t.OS, "GOARCH="+t.Arch)
 		output, err := cmd.CombinedOutput()
 		if err != nil {

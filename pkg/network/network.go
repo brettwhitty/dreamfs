@@ -17,9 +17,9 @@ import (
 	"github.com/hashicorp/memberlist"
 	"github.com/spf13/viper"
 
-	"gnomatix/dreamfs/v2/pkg/metadata"
-	"gnomatix/dreamfs/v2/pkg/storage"
-	"gnomatix/dreamfs/v2/pkg/utils"
+	"gitea.gnomatix.com/gnomatix/dreamfs/v2/pkg/metadata"
+	"gitea.gnomatix.com/gnomatix/dreamfs/v2/pkg/storage"
+	"gitea.gnomatix.com/gnomatix/dreamfs/v2/pkg/utils"
 )
 
 // ------------------------

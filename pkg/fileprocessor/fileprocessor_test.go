@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"gnomatix/dreamfs/v2/pkg/storage"
-	"gnomatix/dreamfs/v2/pkg/utils"
+	"gitea.gnomatix.com/gnomatix/dreamfs/v2/pkg/storage"
+	"gitea.gnomatix.com/gnomatix/dreamfs/v2/pkg/utils"
 )
 
 func init() {

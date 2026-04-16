@@ -1,0 +1,31 @@
+# INSTRUCTIONS TO AGENT ABOUT THESE DIRECTORIES
+- gemini-instructions
+    - instructions / rules files for the Agent guiding behavior
+    - *read-only*
+- gemini-local-tools
+    - information for the Agent on availability and use of local development tools
+    - *read-only*
+- design-specifications
+    - formal project design specifications documents will be kept here 
+    - *read-only*
+- product-requirements
+    - formal project design specifications documents will be kept here
+    - *read-only*
+- development-notes
+    - human developer notes, open questions for review, draft design and requirement documents
+- draft-documents
+    - working directory for collaborative development of draft documents
+    - agent-generated/modified *must* include YAML frontmatter, suggested :
+        - created_timestamp
+        - revised_timestamp
+        - revised_by [eg: 'gemini-3-pro-flash' --- *must be confirmed accurate*]
+        - environment
+        - user_prompt [ie: 'Incorporate my notes from @file_a into @file_b' where this is 'file_b']
+        - user_intent [ie: 'The user requested the inclusion of content from `file_a` into this document']
+        - short_name [ie: 'file_a']
+        - description [ie: 'This contains the user's high-level ideas for improving the storage backend ...']
+        - tags [ie: 'planning, notes, storage, draft']
+        - sources [ie: 'docs/path/to/file_b', 'docs/.../planning-docs-template.md']
+        - gitea_issues [ie: 'repo-name#issue_number']
+        - gitea_wiki [ie: 'repo-name/wiki/some-page']
+

@@ -11,8 +11,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"gnomatix/dreamfs/v2/pkg/storage"
-	"gnomatix/dreamfs/v2/pkg/utils"
+	"gitea.gnomatix.com/gnomatix/dreamfs/v2/pkg/storage"
+	"gitea.gnomatix.com/gnomatix/dreamfs/v2/pkg/utils"
 )
 
 //go:embed static

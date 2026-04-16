@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git log *)",
+      "mcp__gitea__search_issues",
+      "mcp__gitea__list_issues",
+      "mcp__gitea__issue_read",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git rm *)",
+      "Bash(git push *)",
+      "mcp__gitea__pull_request_write",
+      "Bash(git fetch *)",
+      "Bash(git merge *)",
+      "Bash(git stash *)",
+      "Bash(git *)",
+      "Bash(GIT_TRACE=1 git merge origin/develop)",
+      "Bash(go build *)",
+      "Bash(go test *)"
+    ]
+  }
+}

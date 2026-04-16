@@ -12,7 +12,7 @@ import (
 	"github.com/shirou/gopsutil/disk"
 	"github.com/shirou/gopsutil/mem"
 
-	"gnomatix/dreamfs/v2/pkg/network"
+	"gitea.gnomatix.com/gnomatix/dreamfs/v2/pkg/network"
 )
 
 type PeerMetrics struct {

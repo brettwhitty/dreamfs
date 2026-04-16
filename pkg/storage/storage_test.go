@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"gnomatix/dreamfs/v2/pkg/metadata"
+	"gitea.gnomatix.com/gnomatix/dreamfs/v2/pkg/metadata"
 )
 
 func newTestStore(t *testing.T) *PersistentStore {

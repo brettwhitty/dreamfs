@@ -1,7 +1,7 @@
 package main
 
 import (
-	"gnomatix/dreamfs/v2/cmd/wiki-docs/commands"
+	"gitea.gnomatix.com/gnomatix/dreamfs/v2/cmd/wiki-docs/commands"
 )
 
 func main() {
