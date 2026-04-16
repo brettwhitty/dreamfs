@@ -1,8 +1,23 @@
-# DreamFS: The Swarm Filesystem Indexer
+---
+type: MANUAL
+authority: Brett Whitty
+review_status: APPROVED
+version: 0.1.1
+approved_versions: 0.1.*
+generated_on: 2026-01-22 17:03
+origin_persona: Brett Whitty
+origin_session: d346cd76-699f-4ab0-b24a-53180588cb07
+intent: Define the core identity, vision, and technical pillars of the DreamFS project.
+primary_sources: [README.md]
+release_path: README.md
+related_issues: []
+related_sops: []
+tags: [readme, product, landing]
+---
 
-![DreamFS Logo](assets/images/firefoxismybitchnowthxgoogle.png)
+# DreamFS: Distributed Datastore for Extended File Attributes
 
-> "I have a dream, that one day, I will know exactly where all my files are."
+![DreamFS Logo](assets/images/dreamfs-logo-vortex.png)
 
 DreamFS is a lightweight, cross-platform, zero-config distributed datastore for extended file attributes. It provides a unified view of metadata across your entire digital swarm—from Linux servers and NAS devices to Windows desktops and beyond.
 
@@ -10,7 +25,7 @@ DreamFS is a lightweight, cross-platform, zero-config distributed datastore for 
 
 ## 🌩️ The Swarm Vision
 
-![Swarm Vision](assets/images/ihaveadreamanditsadistributedvirtuallocalfirstfilesystem.png)
+!["I have a dream, that one day, I will know exactly where all my files are."](assets/images/dreamfs-vision-metropolis.png)
 
 DreamFS is designed for the modern, fragmented data landscape. It doesn't just index files; it creates a living, breathing distributed index that finds its peers automatically and replicates metadata across the swarm.
 
@@ -22,9 +37,9 @@ DreamFS is designed for the modern, fragmented data landscape. It doesn't just i
 
 ## 🐧🍎🪟 Cross-Platform Integrity
 
-![Compatibility](assets/images/samesamebutdifferent.png)
+!["Same same, but different."](assets/images/dreamfs-platform-unity.png)
 
-"Same same, but different." Whether you're on Windows, macOS, or Linux, DreamFS abstracts away filesystem quirks to provide a consistent canonical view. It intelligently handles UNC paths, network mounts (NFS/CIFS), and case-sensitivity differences to ensure physical uniqueness is preserved across the wire.
+Whether you're on Windows, macOS, or Linux, DreamFS abstracts away filesystem quirks to provide a consistent canonical view. It intelligently handles UNC paths, network mounts (NFS/CIFS), and case-sensitivity differences to ensure physical uniqueness is preserved across the wire.
 
 ---
 
@@ -40,10 +55,12 @@ DreamFS is designed for the modern, fragmented data landscape. It doesn't just i
 ## 🚀 Getting Started
 
 ### Prerequisites
+
 - [Go](https://go.dev/dl/) 1.25.1+
 - [mise](https://mise.jdx.dev/) (recommended for environment management)
 
 ### Installation
+
 ```bash
 # Clone the repository
 git clone https://gitea.gnomatix.com/brett/dreamfs.git
@@ -56,16 +73,19 @@ go build -o indexer cmd/indexer/main.go
 ### Usage
 
 **Initialize an Index:**
+
 ```bash
 ./indexer index /path/to/your/data
 ```
 
 **Start a Swarm Node:**
+
 ```bash
 ./indexer serve --swarm --addr :8080
 ```
 
 **Monitor the Swarm:**
+
 ```bash
 ./indexer monitor --swarm
 ```
@@ -74,15 +94,26 @@ go build -o indexer cmd/indexer/main.go
 
 ## 🧠 Philosophy
 
-![Content over Path](assets/images/thisreallyisntracistitsaboutfreedom.png)
+!["And they will be judged, not by the cases of their strings, but by the content of their sectors"](assets/images/dreamfs-philosophy-content.png)
 
 DreamFS is built on the principle that metadata should be as portable as the ideas it represents. We prioritize **physical uniqueness** over path-based indexing, ensuring that your data remains yours, reachable and verifiable, no matter which platform it currently calls home.
 
 ---
 
+## Meet the Hive
+
+| | | |
+|---|---|---|
+|  | [![DreamFS](assets/images/dreamfs-icon-s.png)](https://github.com/brettwhitty/dreamfs "DreamFS \(The \"Queen-to-Bee\"\)") |  |
+| [![xyzattr](assets/images/xyzattr-icon-s.png)](https://github.com/brettwhitty/xyzattr "xyzattr \(The \"Scribe\"\)") |  | [![meta-fuse](assets/images/meta-fuse-icon-s.png)](https://github.com/brettwhitty/meta-fuse "meta-fuse \(The \"Hacker Couch Potato\"\)") | 
+
+
 ## 📝 License
 
-DreamFS is property of GNOMATIX. All rights reserved.
+`DreamFS` is property of GNOMATIX. All rights reserved.
+
+![GNOMATIX "TEAM"](assets/images/gnomatix-killbots-activate-xs.png)
+![GNOMATIX LOGO](assets/images/gnomatix-new-xs.png "GNOMATIX")
 
 ---
 

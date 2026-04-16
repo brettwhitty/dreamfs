@@ -1,0 +1,16 @@
+[env]
+# Prepend our session bin to the path
+_.path = "{{config_root}}/.gemini/state/session/bin"
+
+[tasks."setup:session"]
+description = "Hydrate the session bin with Windows shims"
+run = "pwsh -NoProfile .gemini/utils/win11/setup_session.ps1"
+alias = "bootstrap"
+
+[tasks."ls"]
+description = "Safe list files"
+run = "pwsh -NoProfile .gemini/utils/win11/g_ls.ps1"
+
+[tasks."verify:env"]
+description = "Verify the session environment"
+run = "pwsh -NoProfile .gemini/utils/win11/verify_env.ps1"

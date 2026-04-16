@@ -18,10 +18,27 @@ go.work
 dreamfs-*
 
 # Gemini CLI internal directory
+.gemini-cache/
 .gemini/tmp
 session_state
 .gemini
+
+# Kiro IDE internal directory
+.kiro/
+
+## Temp Devel Files
+wiki/
+mise/
+.mise.local.toml
+
+## Testing
 indexer.db
+*.db
+
+## Stale artifacts
+logins.txt
+
+## Build artifacts
 indexer
 .env
 go.work.sum

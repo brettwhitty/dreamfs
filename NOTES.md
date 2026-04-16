@@ -1,3 +1,20 @@
+---
+type: WORKING-DRAFT (LLM-GENERATED)
+authority: PENDING MANUAL REVIEW
+review_status: PENDING
+version: 0.1.1
+approved_versions: None
+generated_on: 2026-01-22 17:05
+origin_persona: Rory Devlin (R&D Team Lead)
+origin_session: d346cd76-699f-4ab0-b24a-53180588cb07
+intent: Capture high-level project state and core architecture notes.
+primary_sources: [NOTES.md]
+release_path: NOTES.md
+related_issues: []
+related_sops: []
+tags: [architecture, state, indexer]
+---
+
 # DreamFS v2: Project State Notes
 
 ## Core Features

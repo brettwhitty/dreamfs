@@ -8,7 +8,7 @@ JIRA_REPORTER = "jira@gnomatix.com"
 JIRA_ASSIGNEE = "support@gnomatix.com"
 
 [tools]
-go = "1.25.1"
+go = "latest"
 upx = "latest"
 
 [tasks.build]

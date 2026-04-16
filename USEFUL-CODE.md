@@ -1,3 +1,20 @@
+---
+type: WORKING-DRAFT (LLM-GENERATED)
+authority: PENDING MANUAL REVIEW
+review_status: PENDING
+version: 0.1.1
+approved_versions: None
+generated_on: 2026-01-22 17:05
+origin_persona: Rory Devlin (R&D Team Lead)
+origin_session: d346cd76-699f-4ab0-b24a-53180588cb07
+intent: Extract and document common best implementations from recovered code fragments.
+primary_sources: [USEFUL-CODE.md]
+release_path: USEFUL-CODE.md
+related_issues: []
+related_sops: []
+tags: [code, extracts, reference]
+---
+
 # DreamFS v2: Useful Code Extracts
 
 ## 1. Cross-Platform Path Canonicalization

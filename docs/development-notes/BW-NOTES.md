@@ -1,3 +1,20 @@
+---
+type: MANUAL
+authority: Brett Whitty
+review_status: APPROVED
+version: 0.1.1
+approved_versions: 0.1.*
+generated_on: 2026-01-22 17:03
+origin_persona: Brett Whitty
+origin_session: d346cd76-699f-4ab0-b24a-53180588cb07
+intent: Capture future growth ideas and desirable features for the distributed filesystem indexer.
+primary_sources: [docs/BW-NOTES.md]
+release_path: docs/BW-NOTES.md
+related_issues: []
+related_sops: []
+tags: [vision, roadmap, features]
+---
+
 # Desirable New Features
 
 ## After Filesystems Are Indexed

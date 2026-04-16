@@ -1,3 +1,20 @@
+---
+type: WORKING-DRAFT (LLM-GENERATED)
+authority: PENDING MANUAL REVIEW
+review_status: PENDING
+version: 0.1.1
+approved_versions: None
+generated_on: 2026-01-22 17:03
+origin_persona: Rory Devlin (R&D Team Lead)
+origin_session: d346cd76-699f-4ab0-b24a-53180588cb07
+intent: Provide detailed implementation specifications for DreamFS functional features.
+primary_sources: [docs/SPECIFICATIONS_AND_IMPLEMENTATION.md]
+release_path: docs/SPECIFICATIONS_AND_IMPLEMENTATION.md
+related_issues: []
+related_sops: []
+tags: [specifications, implementation, technical]
+---
+
 ### Functional Features: Detailed Implementation
 
 #### 1. High-Performance File Indexing

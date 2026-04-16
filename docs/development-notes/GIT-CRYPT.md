@@ -1,3 +1,20 @@
+---
+type: MANUAL
+authority: Brett Whitty
+review_status: APPROVED
+version: 0.1.1
+approved_versions: 0.1.*
+generated_on: 2026-01-22 17:05
+origin_persona: Brett Whitty
+origin_session: d346cd76-699f-4ab0-b24a-53180588cb07
+intent: Document the use of git-crypt for securing sensitive files in the repository.
+primary_sources: [docs/GIT-CRYPT.md]
+release_path: docs/GIT-CRYPT.md
+related_issues: []
+related_sops: []
+tags: [security, git-crypt, encryption]
+---
+
 # Git-Crypt Documentation
 
 DreamFS uses [git-crypt](https://github.com/AGWA/git-crypt) to protect sensitive legacy code and internal agent instructions. This ensures that while the repository can be mirrored publicly, sensitive "archive" and "instruction" content remains encrypted and inaccessible without the proper GPG keys.
@@ -9,7 +26,7 @@ The following directories are currently encrypted:
 - `docs/gemini-instructions/**`: Internal AI operational protocols.
 - `docs/gemini-local-tools/**`: CLI tool notes and integration details.
 
-Protection rules are defined in the root [.gitattributes](file:///c:/Users/brett/repos/dreamfs/.gitattributes).
+Protection rules are defined in the root [.gitattributes](../.gitattributes).
 
 ## Unlocking the Repository
 

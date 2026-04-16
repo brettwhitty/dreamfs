@@ -7,17 +7,18 @@ import (
 	"os/signal"
 	"runtime"
 	"syscall"
+	"time"
 
 	"github.com/fatih/color"
 	"github.com/hashicorp/memberlist"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"gitea.gnomatix.com/gnomatix/dreamfs/v2/pkg/storage"
-	"gitea.gnomatix.com/gnomatix/dreamfs/v2/pkg/network"
-	"gitea.gnomatix.com/gnomatix/dreamfs/v2/pkg/fileprocessor"
-	"gitea.gnomatix.com/gnomatix/dreamfs/v2/pkg/utils"
 	"gitea.gnomatix.com/gnomatix/dreamfs/v2/pkg/config"
+	"gitea.gnomatix.com/gnomatix/dreamfs/v2/pkg/fileprocessor"
+	"gitea.gnomatix.com/gnomatix/dreamfs/v2/pkg/network"
+	"gitea.gnomatix.com/gnomatix/dreamfs/v2/pkg/storage"
+	"gitea.gnomatix.com/gnomatix/dreamfs/v2/pkg/utils"
 )
 
 // Global swarm delegate.
@@ -43,7 +44,7 @@ var rootCmd = &cobra.Command{
 			cancel()
 		}()
 		for _, path := range args {
-			_, err := fileprocessor.ProcessFile(ctx, path, nil, false)
+			_, err := fileprocessor.ProcessFile(ctx, path, nil, "", nil)
 			if err != nil {
 				log.Printf("Error processing %s: %v", path, err)
 			}
@@ -120,7 +121,10 @@ func init() { // Use init function for Cobra setup
 				cancel()
 			}()
 
-			if err := fileprocessor.ProcessAllDirectories(ctx, dir, ps); err != nil {
+			workers := viper.GetInt("workers")
+			cw := storage.NewCacheWriter(ps, 100, 5*time.Second)
+			defer cw.Close()
+			if err := fileprocessor.ProcessAllDirectories(ctx, dir, cw, workers, swarmDelegate); err != nil {
 				color.Red("Error during directory processing: %v", err)
 			}
 		},
