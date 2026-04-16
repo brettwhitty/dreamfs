@@ -33,3 +33,7 @@ mise/
 
 ## Testing
 indexer.db
+*.db
+
+## Stale artifacts
+logins.txt
